@@ -1,5 +1,3 @@
-a = 2
-b = 1
+import sys
 
-if a > b:
-    print("a is greater than b")
+print(sys.path)
