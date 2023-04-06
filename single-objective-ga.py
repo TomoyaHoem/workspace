@@ -4,15 +4,26 @@
 
 import random
 import string
+import os
 
 from deap import base
 from deap import creator
 from deap import tools
 
+print("\n")
+print("-" * os.get_terminal_size().columns)
+print(f"Single-Objective Optimization using DEAP-framework")
+print("-" * os.get_terminal_size().columns)
+
 target_sequence = "To be, or not to be."
 
+print("Solve Shakespearean Monkey Problem using EA:")
+print()
+print(f"Target sequence is: {target_sequence}, with length: {len(target_sequence)}")
+print("\n")
 
-def main():
+
+def main() -> None:
     # create types for Fitness and Individual
     # Types ~> defines structure of fintess and individual
 
@@ -27,7 +38,7 @@ def main():
     toolbox = base.Toolbox()
     ## here we create individuals as random words -> random char list
     ## first define way to generate random chars
-    toolbox.register("attr_char", random.choice(string.ascii_letters))
+    toolbox.register("attr_char", random.choice, string.ascii_letters)
     ## then, individuals from repeating these chars
     toolbox.register(
         "individual",
@@ -44,7 +55,11 @@ def main():
     # genetic operators
 
     # evolution loop
+    ind = toolbox.individual()
+    print(ind)
+
+    print("Finished EA")
 
 
-if __name__ == "__main":
+if __name__ == "__main__":
     main()
