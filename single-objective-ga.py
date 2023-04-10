@@ -16,7 +16,7 @@ print(f"Single-Objective Optimization using DEAP-framework")
 print("-" * os.get_terminal_size().columns)
 
 # target to be found
-target_sequence = "To be, or not to be."
+target_sequence = "To be, or not to be: that is the question."
 target_len = len(target_sequence)
 
 print("Solve Shakespearean Monkey Problem using EA:")
@@ -24,8 +24,8 @@ print()
 print(f"Target sequence is: {target_sequence}, with length: {target_len}")
 print("\n")
 
-# char alphabet (lower and uppercase ascii as well as whitespaces)
-alphabet = string.ascii_letters + string.whitespace
+# char alphabet (lower and uppercase ascii as well as whitespaces and punctuation)
+alphabet = string.ascii_letters + string.whitespace + string.punctuation
 
 
 # evaluation function (#of incorrect chars / target_len)
@@ -35,7 +35,7 @@ def evalFitness(individual: list) -> float:
         if individual[i] == target_sequence[i]:
             correct_count += 1
 
-    return correct_count / target_len
+    return (correct_count / target_len,)
 
 
 # mutation function (randomize some chars depending on prob)
@@ -45,6 +45,30 @@ def mutRandChar(individual: list, indpb: float) -> list:
             individual[i] = random.choice(alphabet)
 
     return individual
+
+
+# toString method for individuals
+def individualToString(individual: list) -> string:
+    res = ""
+    return res.join(individual)
+
+
+def printBestIndvs(pop, g):
+    print(f"Top 10 Individuals for generation {g}:")
+    print("")
+    best_individuals = tools.selBest(pop, 10)
+    for i in range(len(best_individuals)):
+        indv_pheno = individualToString(best_individuals[i])
+        print(f"{i+1}: {indv_pheno} (Fitness: {best_individuals[i].fitness.values[0]})")
+    print("")
+
+
+def printStats(fits, mean, std):
+    print(f"  Min {min(fits)}")
+    print(f"  Max {max(fits)}")
+    print(f"  Avg {mean}")
+    print(f"  Std {std}")
+    print("")
 
 
 def main() -> None:
@@ -89,7 +113,7 @@ def main() -> None:
     for ind, fit in zip(pop, fitnesses):
         ind.fitness.values = fit
     ## constants
-    CXPB, MUTPB = 0.5, 0.2
+    CXPB, MUTPB = 0.3, 0.5
 
     fits = [ind.fitness.values[0] for ind in pop]
 
@@ -98,7 +122,8 @@ def main() -> None:
 
     while max(fits) < 1 and g < 1000:
         g += 1
-        print(f"-- Generation {g} --")
+        if g % 100 == 0:
+            print(f"-- Generation {g} --")
 
         # select next generation of individuals
         offspring = toolbox.select(pop, len(pop))
@@ -107,13 +132,13 @@ def main() -> None:
 
         # apply crossover and mutation on offspring
         for child1, child2 in zip(offspring[::2], offspring[1::2]):
-            if random.random < CXPB:
+            if random.random() < CXPB:
                 toolbox.mate(child1, child2)
                 del child1.fitness.values
                 del child2.fitness.values
 
         for mutant in offspring:
-            if random.random < MUTPB:
+            if random.random() < MUTPB:
                 toolbox.mutate(mutant)
                 del mutant.fitness.values
 
@@ -133,10 +158,14 @@ def main() -> None:
         sum2 = sum(x * x for x in fits)
         std = abs(sum2 / length - mean**2) ** 0.5
 
-        print(f"  Min {min(fits)}")
-        print(f"  Max {max(fits)}")
-        print(f"  Avg {mean}")
-        print(f"  Std {std}")
+        if g % 100 == 0:
+            print("**Statistics**")
+            printStats(fits, mean, std)
+            printBestIndvs(pop, g)
+
+    print(f"**Final Statistics after {g} generations**")
+    printStats(fits, mean, std)
+    printBestIndvs(pop, g)
 
     print("Finished EA")
 
