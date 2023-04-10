@@ -1,6 +1,6 @@
 # Single-Objective Evolutionary Algorithm
 # to solve Shakespeare Monkey Problem
-# using DEAP - framework
+# using DEAP framework
 
 import random
 import string
@@ -19,7 +19,7 @@ print(f"Single-Objective Optimization using DEAP-framework")
 print("-" * os.get_terminal_size().columns)
 
 # target to be found
-target_sequence = "All the world's a stage, and all the men and women merely players."
+target_sequence = "To be, or not to be: that is the question."
 target_len = len(target_sequence)
 
 print("Solve Shakespearean Monkey Problem using EA:")
@@ -75,6 +75,9 @@ def printStats(fits, mean, std):
 
 
 def main() -> None:
+    # set seed for reproducibility
+    random.seed(128)
+
     # create types for Fitness and Individual
     # Type ~> defines structure of fintess and individual
 
