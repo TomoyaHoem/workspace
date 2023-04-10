@@ -6,6 +6,9 @@ import random
 import string
 import os
 
+import numpy as np
+import matplotlib.pyplot as plt
+
 from deap import base
 from deap import creator
 from deap import tools
@@ -16,7 +19,7 @@ print(f"Single-Objective Optimization using DEAP-framework")
 print("-" * os.get_terminal_size().columns)
 
 # target to be found
-target_sequence = "To be, or not to be: that is the question."
+target_sequence = "All the world's a stage, and all the men and women merely players."
 target_len = len(target_sequence)
 
 print("Solve Shakespearean Monkey Problem using EA:")
@@ -73,7 +76,7 @@ def printStats(fits, mean, std):
 
 def main() -> None:
     # create types for Fitness and Individual
-    # Types ~> defines structure of fintess and individual
+    # Type ~> defines structure of fintess and individual
 
     ## here we create a single-objective maximizing fitness function
     creator.create("FitnessMax", base.Fitness, weights=(1.0,))
@@ -113,14 +116,25 @@ def main() -> None:
     for ind, fit in zip(pop, fitnesses):
         ind.fitness.values = fit
     ## constants
-    CXPB, MUTPB = 0.3, 0.5
+    CXPB, MUTPB = 0.5, 0.4
 
+    # statistics object to create statistics data during optimization
+    stats = tools.Statistics(key=lambda ind: ind.fitness.values)
+    # register functions with aliases
+    stats.register("max", np.max)
+    stats.register("avg", np.mean)
+
+    # logbook to store statistics in
+    logbook = tools.Logbook()
+
+    # extract fitness values of individuals
     fits = [ind.fitness.values[0] for ind in pop]
 
     # evolution loop
     g = 0
 
-    while max(fits) < 1 and g < 1000:
+    #  max(fits) < 1 and g < 1000:
+    while g < 1000:
         g += 1
         if g % 100 == 0:
             print(f"-- Generation {g} --")
@@ -148,6 +162,7 @@ def main() -> None:
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
 
+        # replace current population by offspring
         pop[:] = offspring
 
         # gather all fitnesses in one list and print stats
@@ -163,11 +178,27 @@ def main() -> None:
             printStats(fits, mean, std)
             printBestIndvs(pop, g)
 
+        # store statistics
+        record = stats.compile(pop)
+        logbook.record(gen=g, **record)
+
     print(f"**Final Statistics after {g} generations**")
     printStats(fits, mean, std)
     printBestIndvs(pop, g)
 
     print("Finished EA")
+
+    gen, maxFitness, avgFitness = logbook.select("gen", "max", "avg")
+
+    plt.plot(gen, maxFitness, label="Max Fitness")
+    plt.plot(gen, avgFitness, color="g", ls="dotted", label="Average Fitness")
+
+    plt.title(f'GA Performance for: "{target_sequence}"', wrap=True)
+    plt.xlabel("Generation")
+    plt.ylabel("Fitness")
+    plt.legend(loc="lower right")
+
+    plt.show()
 
 
 if __name__ == "__main__":
