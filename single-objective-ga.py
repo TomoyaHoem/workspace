@@ -19,7 +19,7 @@ print(f"Single-Objective Optimization using DEAP-framework")
 print("-" * os.get_terminal_size().columns)
 
 # target to be found
-target_sequence = "To be, or not to be: that is the question."
+target_sequence = "All the world's a stage, and all the men and women merely players."
 target_len = len(target_sequence)
 
 print("Solve Shakespearean Monkey Problem using EA:")
@@ -81,9 +81,9 @@ def main() -> None:
     # create types for Fitness and Individual
     # Type ~> defines structure of fintess and individual
 
-    ## here we create a single-objective maximizing fitness function
+    ## here we create a single-objective maximizing fitness property
     creator.create("FitnessMax", base.Fitness, weights=(1.0,))
-    ## and individuals using lists and defined fitness
+    ## and individuals using lists and the defined fitness
     creator.create("Individual", list, fitness=creator.FitnessMax)
 
     # toolbox contains logic on how to create individuals
