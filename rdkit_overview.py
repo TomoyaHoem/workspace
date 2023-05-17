@@ -1,6 +1,7 @@
 from rdkit import Chem
 from rdkit.Chem import Draw
 from rdkit.Chem import QED
+from rdkit.Chem import Crippen
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,6 +17,10 @@ def main() -> None:
 
     img = Draw.MolToImage(m)
     img.show()
+
+    logP = Crippen.MolLogP(m)
+
+    print(f"Molecule's LogP value is: {logP}")
 
     print(QED.default(m))
     print(QED.properties(m))
