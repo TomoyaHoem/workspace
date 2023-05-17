@@ -2,6 +2,13 @@ from rdkit import Chem
 from rdkit.Chem import Draw
 from rdkit.Chem import QED
 from rdkit.Chem import Crippen
+from rdkit.Chem import RDConfig
+import os
+import sys
+
+sys.path.append(os.path.join(RDConfig.RDContribDir, "SA_Score"))
+# now you can import sascore!
+import sascorer
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,8 +26,10 @@ def main() -> None:
     img.show()
 
     logP = Crippen.MolLogP(m)
-
     print(f"Molecule's LogP value is: {logP}")
+
+    s = sascorer.calculateScore(m)
+    print(f"Molecule's SAscore: {s}")
 
     print(QED.default(m))
     print(QED.properties(m))
