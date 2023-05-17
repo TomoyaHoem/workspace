@@ -1,5 +1,6 @@
 from rdkit import Chem
 from rdkit.Chem import Draw
+from rdkit.Chem import QED
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,8 +12,16 @@ def main() -> None:
         print("Invalid Molecule")
         return
 
+    m2 = Chem.MolFromSmiles("Cc1ccccc1")
+
     img = Draw.MolToImage(m)
     img.show()
+
+    print(QED.default(m))
+    print(QED.properties(m))
+
+    print(QED.default(m2))
+    print(QED.properties(m2))
 
 
 if __name__ == "__main__":
