@@ -1,0 +1,17 @@
+smiles zinc_id
+CC[C@](C)(N=[N+]=[N-])c1ccc(F)cc1 536953084
+[N-]=[N+]=N[C@@H]1CCc2c(Cl)cccc21 958720351
+[N-]=[N+]=N[C@@H]1CCc2cc(Cl)ccc21 521400001
+[N-]=[N+]=N[C@H]1CCc2c(Cl)cccc21 958720352
+CC(C)[C@@H]1CC[C@@H](C)C[C@H]1N=[N+]=[N-] 35606049
+C[C@@H](N=[N+]=[N-])c1ccccc1Cl 149907504
+CC[C@@](C)(N=[N+]=[N-])c1ccc(F)cc1 536953099
+Cc1ccc2c(c1)[C@H](N=[N+]=[N-])CCC2 238856632
+Cc1cc(F)ccc1[C@H](C)N=[N+]=[N-] 669371711
+C[C@H](N=[N+]=[N-])c1ccccc1Cl 149907294
+CC(C)[C@@H]1CC[C@@H](C)C[C@@H]1N=[N+]=[N-] 35606043
+C[Si](C)(C)N=Nc1ccccc1 606521137
+CC(C)[C@H]1CC[C@H](C)C[C@H]1N=[N+]=[N-] 35606046
+Cc1cc(F)ccc1[C@@H](C)N=[N+]=[N-] 669371710
+Cc1ccc2c(c1)[C@@H](N=[N+]=[N-])CCC2 238856633
+CC(C)[C@H]1CC[C@@H](C)C[C@H]1N=[N+]=[N-] 35606052
