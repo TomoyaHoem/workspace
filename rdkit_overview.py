@@ -8,7 +8,7 @@ import sys
 
 sys.path.append(os.path.join(RDConfig.RDContribDir, "SA_Score"))
 # now you can import sascore!
-import sascorer
+# import sascorer
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -28,8 +28,8 @@ def main() -> None:
     logP = Crippen.MolLogP(m)
     print(f"Molecule's LogP value is: {logP}")
 
-    s = sascorer.calculateScore(m)
-    print(f"Molecule's SAscore: {s}")
+    # s = sascorer.calculateScore(m)
+    # print(f"Molecule's SAscore: {s}")
 
     print(QED.default(m))
     print(QED.properties(m))
