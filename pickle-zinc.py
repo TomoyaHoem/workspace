@@ -30,7 +30,7 @@ def ReadMols(cwd, maxFromFile, molecules) -> None:
 
 
 def main() -> None:
-    print(f"--- Pickle ZINC data ---")
+    print(f"--- Pickling ZINC data ---")
 
     # create dataframe
     molecules = pd.DataFrame(columns=["Dir", "File", "Mol", "Smiles"])
@@ -38,7 +38,7 @@ def main() -> None:
     # read data from files into dataframe
     cwd = os.getcwd() + "\ZINCSMILES"
     # current index to store in dataframe
-    maxFromFile = 10
+    maxFromFile = 1000
     ReadMols(cwd, maxFromFile, molecules)
 
     # downcast directory and filename to category to save memory
@@ -53,7 +53,7 @@ def main() -> None:
     print(molecules.head())
 
     # pickle dataframe
-    molecules.to_pickle("./pkl/test.pkl")
+    molecules.to_pickle("./pkl/shards_test.pkl")
 
 
 if __name__ == "__main__":

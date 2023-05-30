@@ -1,13 +1,15 @@
 from rdkit import Chem
 import os
 import numpy as np
+import pandas as pd
 
 
 def main() -> None:
     print(f"Entry")
 
-    # read all smiles strings
-    cwd = os.getcwd() + "\ZINCSMILES"
+    # unpickle
+    molecules = pd.read_pickle("./pkl/shards.pkl")
+    print(molecules.head())
 
     # evaluate all molecules for logp, sa, qed
 
