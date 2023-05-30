@@ -1,10 +1,17 @@
-from rdkit import Chem
-from rdkit.Chem import QED
-from rdkit.Chem import Crippen
+import sys
 import os
 import numpy as np
 import pandas as pd
 import time
+
+from rdkit import Chem
+from rdkit.Chem import QED
+from rdkit.Chem import Crippen
+
+from rdkit.Chem import RDConfig
+
+sys.path.append(os.path.join(RDConfig.RDContribDir, "SA_Score"))
+import sascorer
 
 
 def main() -> None:
@@ -33,6 +40,13 @@ def main() -> None:
     end = time.time()
     dur = round(end - start, 3)
     print(f"Elapsed time to calculate LogP: {dur}s")
+
+    start = time.time()
+    molecules["SA"] = molecules["Mol"].apply(sascorer.calculateScore)
+    print(molecules.head())
+    end = time.time()
+    dur = round(end - start, 3)
+    print(f"Elapsed time to calculate SA score: {dur}s")
 
     # plot result
 
