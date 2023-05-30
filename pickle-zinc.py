@@ -6,6 +6,7 @@ from rdkit.Chem import PandasTools
 from alive_progress import alive_bar
 
 TOTAL_NUM_MOLS = 1300000
+MOL_100_PER_FILE = 7943
 
 
 def SetDTypes(df):
@@ -34,21 +35,23 @@ def ReadAllMols(cwd, molecules) -> None:
 def ReadMolsWithLimit(cwd, maxFromFile, molecules) -> None:
     count = 0
 
-    for root, dirs, files in os.walk(cwd):
-        for file in files:
-            index = 0
-            # print(f"Storing {file}")
-            curP = root + "\\" + file
-            suppl = Chem.SmilesMolSupplier(curP)
-            for mol in suppl:
-                if index > maxFromFile:
-                    # print("LIMIT")
-                    break
-                curMol = [root[-2:], file, mol, Chem.MolToSmiles(mol)]
-                # print(f"SMILES no {index} + {curMol}")
-                molecules.loc[count] = curMol
-                count += 1
-                index += 1
+    with alive_bar(MOL_100_PER_FILE) as bar:
+        for root, dirs, files in os.walk(cwd):
+            for file in files:
+                index = 0
+                # print(f"Storing {file}")
+                curP = root + "\\" + file
+                suppl = Chem.SmilesMolSupplier(curP)
+                for mol in suppl:
+                    if index > maxFromFile:
+                        # print("LIMIT")
+                        break
+                    curMol = [root[-2:], file, mol, Chem.MolToSmiles(mol)]
+                    # print(f"SMILES no {index} + {curMol}")
+                    molecules.loc[count] = curMol
+                    count += 1
+                    index += 1
+                    bar()
 
     print(f"Stored a total of {count} molecules")
 
@@ -62,7 +65,7 @@ def main() -> None:
     # read data from files into dataframe
     cwd = os.getcwd() + "\ZINCSMILES"
     # current index to store in dataframe
-    maxFromFile = 1000
+    maxFromFile = 100
     ReadMolsWithLimit(cwd, maxFromFile, molecules)
 
     # downcast directory and filename to category to save memory
@@ -77,7 +80,8 @@ def main() -> None:
     print(molecules.head())
 
     # pickle dataframe
-    molecules.to_pickle("./pkl/shards_test.pkl")
+    molecules.to_pickle("./pkl/100-shards.pkl")
+    print("--- Finished Pickling ---")
 
 
 if __name__ == "__main__":
