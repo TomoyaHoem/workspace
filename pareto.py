@@ -3,6 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 import time
+import matplotlib.pyplot as plt
 
 from rdkit import Chem
 from rdkit.Chem import QED
@@ -19,36 +20,17 @@ def main() -> None:
 
     start = time.time()
     # unpickle
-    molecules = pd.read_pickle("./pkl/100-shards.pkl")
-    print(molecules.head())
+    molecules = pd.read_pickle("./pkl/100-shards-indicators.pkl")
     end = time.time()
     dur = round(end - start, 3)
 
     print(f"Elapsed time to unpickle: {dur}s")
 
-    # evaluate all molecules for qed, log, sa
-    start = time.time()
-    molecules["QED"] = molecules["Mol"].apply(QED.default)
     print(molecules.head())
-    end = time.time()
-    dur = round(end - start, 3)
-    print(f"Elapsed time to calculate QED: {dur}s")
-
-    start = time.time()
-    molecules["LogP"] = molecules["Mol"].apply(Crippen.MolLogP)
-    print(molecules.head())
-    end = time.time()
-    dur = round(end - start, 3)
-    print(f"Elapsed time to calculate LogP: {dur}s")
-
-    start = time.time()
-    molecules["SA"] = molecules["Mol"].apply(sascorer.calculateScore)
-    print(molecules.head())
-    end = time.time()
-    dur = round(end - start, 3)
-    print(f"Elapsed time to calculate SA score: {dur}s")
 
     # plot result
+    molecules.plot(kind="scatter", x="QED", y="LogP")
+    plt.show()
 
     # apply non-dominated sorting
 
