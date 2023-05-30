@@ -1,5 +1,6 @@
 from rdkit import Chem
 import os
+import numpy as np
 
 
 def main() -> None:
@@ -11,18 +12,18 @@ def main() -> None:
     molecules = []
 
     for dirnum, (root, dirs, files) in enumerate(os.walk(cwd)):
-        if dirs:
-            for dir in dirs:
-                print(dir)
-                molecules.append(dir)
+        for dir in dirs:
+            molecules.append([])
 
-    print(molecules)
-
-    # for filenum, file in enumerate(files):
-    #    if file.endswith("smi"):
-    #        suppl = Chem.SmilesMolSupplier(root + "\\" + file)
-    #        for mol in suppl:
-    #            molecules[dirnum][filenum].append(mol)
+        for filenum, file in enumerate(files):
+            if dirnum > 1:
+                break
+            molecules[dirnum - 1].append([])
+            curP = root + "\\" + file
+            suppl = Chem.SmilesMolSupplier(curP)
+            for molnum, mol in enumerate(suppl):
+                print(f"Storing SMILES: {molnum} of {curP}")
+                molecules[dirnum - 1][filenum - 1].append(mol)
 
     # evaluate all molecules for logp, sa, qed
 
