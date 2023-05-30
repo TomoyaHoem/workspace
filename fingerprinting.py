@@ -9,6 +9,8 @@ def main() -> None:
     fpGen = AllChem.GetRDKitFPGenerator()
     fp = fpGen.GetFingerprint(m)
 
+    print(dir(m))
+
     print(np.nonzero(np.array(fp)))
     print(fp.ToBitString())
 
