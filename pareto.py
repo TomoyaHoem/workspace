@@ -11,7 +11,7 @@ from rdkit.Chem import Crippen
 from rdkit.Chem import RDConfig
 
 sys.path.append(os.path.join(RDConfig.RDContribDir, "SA_Score"))
-import sascorer
+import sascorer  # type: ignore
 
 
 def main() -> None:
