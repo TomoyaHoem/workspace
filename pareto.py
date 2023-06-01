@@ -3,16 +3,44 @@ import os
 import numpy as np
 import pandas as pd
 import time
+from mpl_toolkits import mplot3d
 import matplotlib.pyplot as plt
+from alive_progress import alive_bar
 
-from rdkit import Chem
-from rdkit.Chem import QED
-from rdkit.Chem import Crippen
 
-from rdkit.Chem import RDConfig
+NUM_MOLS = 2000
 
-sys.path.append(os.path.join(RDConfig.RDContribDir, "SA_Score"))
-import sascorer  # type: ignore
+
+def col(val: bool) -> str:
+    if val:
+        return "red"
+    return "blue"
+
+
+def dominates(a: list, b: list) -> bool:
+    dominate = False
+
+    for i in range(len(a)):
+        if b[i] > a[i]:
+            dominate = False
+            break
+        if a[i] > b[i]:
+            dominate = True
+
+    return dominate
+
+
+def findNondominated(mols: pd.DataFrame) -> pd.DataFrame:
+    mols["nondominated"] = True
+
+    with alive_bar(NUM_MOLS * NUM_MOLS) as bar:
+        for i, row1 in mols.iterrows():
+            for j, row2 in mols.iterrows():
+                if dominates([row2["QED"], row2["SA"]], [row1["QED"], row1["SA"]]):
+                    mols.at[i, "nondominated"] = False
+                bar()
+
+    return mols
 
 
 def main() -> None:
@@ -29,12 +57,33 @@ def main() -> None:
     print(molecules.head())
 
     # plot result
-    molecules.plot(kind="scatter", x="QED", y="LogP")
-    plt.show()
+    # Creating figure
+    fig = plt.figure(figsize=(10, 6))
+    ax = plt.axes(projection="3d")
 
-    # apply non-dominated sorting
+    # Creating plot
+    ax.scatter(molecules["QED"], molecules["LogP"], molecules["SA"], color="green")
+    ax.set_xlabel("QED", fontweight="bold")
+    ax.set_ylabel("LogP", fontweight="bold")
+    ax.set_zlabel("SA", fontweight="bold")
+    plt.title("Molecule Indicator")
+
+    # show plot
+    # plt.show()
+
+    molecules = molecules.head(NUM_MOLS)
+
+    # find non-dominated molecules
+    molecules = findNondominated(molecules)
+
+    # color column depending on domination
+    molecules["color"] = molecules["nondominated"].apply(col)
+
+    print(molecules.head())
 
     # plot pareto front
+    molecules.plot.scatter(x="QED", y="SA", c="color")
+    plt.show()
 
 
 if __name__ == "__main__":
