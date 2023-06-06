@@ -1,3 +1,6 @@
+from rdkit import Chem
+from rdkit.Chem import AllChem
+
 import sys
 import os
 import numpy as np
@@ -8,7 +11,7 @@ import matplotlib.pyplot as plt
 from alive_progress import alive_bar
 
 
-NUM_MOLS = 2000
+NUM_MOLS = 1000
 
 
 def col(val: bool) -> str:
@@ -20,12 +23,17 @@ def col(val: bool) -> str:
 def dominates(a: list, b: list) -> bool:
     dominate = False
 
-    for i in range(len(a)):
-        if b[i] > a[i]:
-            dominate = False
-            break
-        if a[i] > b[i]:
-            dominate = True
+    # check QED
+    if b[0] > a[0]:
+        return False
+    if a[0] > b[0]:
+        dominate = True
+
+    # check SA
+    if b[1] < a[1]:
+        return False
+    if a[1] < b[1]:
+        dominate = True
 
     return dominate
 
@@ -84,6 +92,13 @@ def main() -> None:
     # plot pareto front
     molecules.plot.scatter(x="QED", y="SA", c="color")
     plt.show()
+
+    # add fingerprints
+    fpGen = AllChem.GetRDKitFPGenerator()
+
+    molecules["Fingerprint"] = molecules["Mol"].apply(fpGen.GetFingerprint)
+
+    print(molecules.head())
 
 
 if __name__ == "__main__":
