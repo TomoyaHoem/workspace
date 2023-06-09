@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from alive_progress import alive_bar
 
 
-NUM_MOLS = 1000
+NUM_MOLS = 2000
 
 
 def col(val: bool) -> str:
@@ -99,6 +99,9 @@ def main() -> None:
     molecules["Fingerprint"] = molecules["Mol"].apply(fpGen.GetFingerprint)
 
     print(molecules.head())
+    # pickle result
+    molecules.to_pickle("./pkl/100-shards-2ksubset-pareto.pkl")
+    print("--- Finished Pickling ---")
 
 
 if __name__ == "__main__":
