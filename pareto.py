@@ -12,7 +12,7 @@ from alive_progress import alive_bar
 from colorsys import hsv_to_rgb
 
 
-NUM_MOLS = 100
+NUM_MOLS = 2000
 
 
 def assignColor(val: int, minval: int, maxval: int) -> list:
@@ -142,7 +142,7 @@ def main() -> None:
     maxval = molecules["frontIndex"].max()
     molecules["color"] = molecules["frontIndex"].apply(assignColor, args=(1, maxval))
 
-    print(molecules.head(20))
+    print(molecules.head())
 
     # # plot pareto front
     for front, m in molecules.groupby("frontIndex"):
@@ -162,9 +162,9 @@ def main() -> None:
     # molecules["Fingerprint"] = molecules["Mol"].apply(fpGen.GetFingerprint)
 
     # print(molecules.head())
-    # # pickle result
-    # molecules.to_pickle("./pkl/100-shards-2ksubset-pareto.pkl")
-    # print("--- Finished Pickling ---")
+    # pickle result
+    molecules.to_pickle("./pkl/100-shards-2ksubset-pareto.pkl")
+    print("--- Finished Pickling ---")
 
 
 if __name__ == "__main__":

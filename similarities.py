@@ -1,7 +1,7 @@
 # compare fingerprints with avg / max / min / etc. molecule
 # compare different types of fingerprints
 
-# compare different types of similarities: hamming, levenshtein, cosine, dice, tanimoto (jaccard, rajski)
+# compare different types of similarities: tanimoto
 
 import pandas as pd
 import time
