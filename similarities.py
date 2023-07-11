@@ -32,11 +32,12 @@ def plotSim(similarities: pd.DataFrame) -> None:
             axs[i, j].scatter(
                 similarities[cols[k]],
                 similarities[cols[l]],
-                color="green",
-                alpha=0.5,
+                color=similarities["color"],
                 s=1.0,
             )
             axs[i, j].set(xlabel=cols[k], ylabel=cols[l])
+            axs[i, j].set_xlim(0, 1)
+            axs[i, j].set_ylim(0, 1)
 
     fig.tight_layout(pad=0.5)
     plt.show()
@@ -125,13 +126,16 @@ def main() -> None:
     similarities["MACCS-hi"] = DataStructs.BulkTanimotoSimilarity(
         macc_refs[2], molecules["MACCSKey"]
     )
+    similarities["frontIndex"] = molecules["frontIndex"]
+    similarities["color"] = molecules["color"]
+    similarities.loc[similarities["frontIndex"] != 1, "color"] = "#C2FFC333"
 
     print(similarities.head())
 
     no_self_sim = similarities.drop(index=[low, med, hi])
 
     # plot similarities by contrasting 2 fingerprint methods at a time -> total of 9 (3x3) plots
-    plotSim(similarities)
+    plotSim(no_self_sim)
 
 
 if __name__ == "__main__":
