@@ -1,16 +1,18 @@
 import pandas as pd
 import numpy as np
+import re
 
 
 def main() -> None:
-    df = pd.DataFrame(
-        np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), columns=["a", "b", "c"]
-    )
-
-    df_drop = df.drop(index=[0, 1])
-
-    print(df)
-    print(df_drop)
+    _smiles = "C1CCCCC1C2CCCCC2"
+    avoid_ring = []
+    ring_tmp = set(re.findall(r"\d", _smiles))
+    print(ring_tmp)
+    for j in ring_tmp:
+        tmp = [i for i, val in enumerate(_smiles) if val == j]
+        while tmp:
+            avoid_ring += [j for j in range(tmp.pop(0), tmp.pop(0) + 1)]
+    print(set(avoid_ring))
 
 
 if __name__ == "__main__":

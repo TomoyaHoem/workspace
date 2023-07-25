@@ -164,6 +164,7 @@ def main() -> None:
     # print(molecules.head())
     # pickle result
     molecules.to_pickle("./pkl/100-shards-2ksubset-pareto.pkl")
+    # molecules.to_pickle("./pkl/100-shards-pareto.pkl")
     print("--- Finished Pickling ---")
 
 

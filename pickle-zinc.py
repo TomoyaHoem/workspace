@@ -57,7 +57,7 @@ def ReadMolsWithLimit(cwd, maxFromFile, molecules) -> None:
 
 
 def main() -> None:
-    print(f"--- Pickling ZINC data ---")
+    print(f"--- Reading ZINC data ---")
 
     # create dataframe
     molecules = pd.DataFrame(columns=["Dir", "File", "Mol", "Smiles"])
