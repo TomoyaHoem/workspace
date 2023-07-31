@@ -20,7 +20,7 @@ def main() -> None:
 
     start = time.time()
     # unpickle
-    molecules = pd.read_pickle("./pkl/100-shards.pkl")
+    molecules = pd.read_pickle("./pkl/100-fragments.pkl")
     print(molecules.head())
     end = time.time()
     dur = round(end - start, 3)
@@ -49,7 +49,7 @@ def main() -> None:
     print(molecules.head())
 
     # pickle result
-    molecules.to_pickle("./pkl/100-shards-indicators.pkl")
+    molecules.to_pickle("./pkl/100-fragments-indicators.pkl")
     print("--- Finished Pickling ---")
 
 

@@ -46,7 +46,7 @@ def plotSim(similarities: pd.DataFrame) -> None:
 def main() -> None:
     start = time.time()
     # unpickle
-    molecules = pd.read_pickle("./pkl/100-shards-2ksubset-pareto.pkl")
+    molecules = pd.read_pickle("./pkl/100-fragments-pareto.pkl")
     end = time.time()
     dur = round(end - start, 3)
 

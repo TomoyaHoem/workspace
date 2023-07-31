@@ -6,7 +6,7 @@ from rdkit.Chem import PandasTools
 from alive_progress import alive_bar
 
 TOTAL_NUM_MOLS = 1300000
-MOL_100_PER_FILE = 7943
+MOL_100_PER_FILE = 20336
 
 
 def SetDTypes(df):
@@ -63,15 +63,15 @@ def main() -> None:
     molecules = pd.DataFrame(columns=["Dir", "File", "Mol", "Smiles"])
 
     # read data from files into dataframe
-    cwd = os.getcwd() + "\ZINCSMILES"
+    cwd = os.getcwd() + "\Fragments"
     # current index to store in dataframe
     maxFromFile = 100
     ReadMolsWithLimit(cwd, maxFromFile, molecules)
 
     # downcast directory and filename to category to save memory
-    # print(molecules.info())
-    # molecules = SetDTypes(molecules)
-    # print(molecules.info())
+    print(molecules.info())
+    molecules = SetDTypes(molecules)
+    print(molecules.info())
 
     # add molecule column to dataframe, does not work currently?
     # PandasTools.AddMoleculeColumnToFrame(molecules, "Smiles", "Molecule")
@@ -80,7 +80,7 @@ def main() -> None:
     print(molecules.head())
 
     # pickle dataframe
-    molecules.to_pickle("./pkl/100-shards.pkl")
+    molecules.to_pickle("./pkl/100-fragments.pkl")
     print("--- Finished Pickling ---")
 
 

@@ -12,7 +12,7 @@ from alive_progress import alive_bar
 from colorsys import hsv_to_rgb
 
 
-NUM_MOLS = 2000
+NUM_MOLS = 4068
 
 
 def assignColor(val: int, minval: int, maxval: int) -> list:
@@ -110,7 +110,7 @@ def main() -> None:
 
     start = time.time()
     # unpickle
-    molecules = pd.read_pickle("./pkl/100-shards-indicators.pkl")
+    molecules = pd.read_pickle("./pkl/100-fragments-indicators.pkl")
     end = time.time()
     dur = round(end - start, 3)
 
@@ -133,7 +133,12 @@ def main() -> None:
     # show plot
     # plt.show()
 
-    molecules = molecules.head(NUM_MOLS)
+    # molecules = molecules.head(NUM_MOLS)
+    molecules = molecules.iloc[::5, :]
+    molecules = molecules.reset_index()
+
+    print(len(molecules))
+    print(molecules.head())
 
     # find non-dominated molecules
     molecules = fastNonDominatedSort(molecules)
@@ -163,7 +168,7 @@ def main() -> None:
 
     # print(molecules.head())
     # pickle result
-    molecules.to_pickle("./pkl/100-shards-2ksubset-pareto.pkl")
+    molecules.to_pickle("./pkl/100-fragments-pareto.pkl")
     # molecules.to_pickle("./pkl/100-shards-pareto.pkl")
     print("--- Finished Pickling ---")
 
