@@ -10,6 +10,8 @@
 import time
 import pandas as pd
 import random
+import os
+import sys
 
 from rdkit import Chem
 from rdkit import RDLogger
@@ -56,7 +58,7 @@ def onepoint(parents: list) -> list:
 def main() -> None:
     start = time.time()
     # unpickle
-    molecules = pd.read_pickle("./pkl/100-shards-2ksubset-pareto.pkl")
+    molecules = pd.read_pickle("./pkl/100-fragments-pareto.pkl")
     end = time.time()
     dur = round(end - start, 3)
 
@@ -67,14 +69,24 @@ def main() -> None:
     # parents = molecules["Smiles"].sample(n=10, random_state=1)
     # print(parents.head())
 
-    RDLogger.DisableLog("rdApp.*")
+    # RDLogger.DisableLog("rdApp.*")
+    stderr_fileno = sys.stderr.fileno()
+    stderr_save = os.dup(stderr_fileno)
+    # file descriptor of log file
+    stderr_fd = open("error.log", "w")
+    os.dup2(stderr_fd.fileno(), stderr_fileno)
 
     # try crossover variants
 
     # 1.
     test_crossover(molecules, onepoint)
 
-    RDLogger.EnableLog("rdApp.*")
+    # close the log file
+    stderr_fd.close()
+    # restore old sys err
+    os.dup2(stderr_save, stderr_fileno)
+
+    # RDLogger.EnableLog("rdApp.*")
 
 
 if __name__ == "__main__":
