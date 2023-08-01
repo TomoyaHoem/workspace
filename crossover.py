@@ -17,7 +17,7 @@ from rdkit import Chem
 from rdkit import RDLogger
 
 
-def test_crossover(molecules: pd.DataFrame, crossover: callable) -> None:
+def test_crossover(molecules: pd.DataFrame, crossover: callable, fileno: int) -> None:
     print(f"Testing crossover method: {crossover.__name__}")
     test_count = 5000
     fail = 0
@@ -28,6 +28,7 @@ def test_crossover(molecules: pd.DataFrame, crossover: callable) -> None:
         for c in children:
             mol = Chem.MolFromSmiles(c)
             if not mol:
+                os.write(fileno, b"\n")
                 fail += 1
 
     success = round((1 - fail / (test_count * 2)) * 100, 2)
@@ -79,7 +80,7 @@ def main() -> None:
     # try crossover variants
 
     # 1.
-    test_crossover(molecules, onepoint)
+    test_crossover(molecules, onepoint, stderr_fd.fileno())
 
     # close the log file
     stderr_fd.close()
