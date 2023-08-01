@@ -14,6 +14,10 @@ def main() -> None:
             avoid_ring += [j for j in range(tmp.pop(0), tmp.pop(0) + 1)]
     print(set(avoid_ring))
 
+    a = set(range(16))
+
+    print(a.difference(avoid_ring))
+
 
 if __name__ == "__main__":
     main()

@@ -40,9 +40,7 @@ def main() -> None:
         "Non-ring aromatic",
     ]
 
-    print(sum(counts))
-    print(10000 - 740)
-
+    print(counts)
     plt.bar(keys, counts)
     plt.show()
 
