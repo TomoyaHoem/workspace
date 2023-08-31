@@ -1,6 +1,7 @@
 import time
 import os
 import sys
+import random
 
 import pandas as pd
 import numpy as np
@@ -23,6 +24,9 @@ from pymoo.core.sampling import Sampling
 from pymoo.core.crossover import Crossover
 from pymoo.core.mutation import Mutation
 from pymoo.core.duplicate import ElementwiseDuplicateElimination
+from pymoo.visualization.scatter import Scatter
+
+alphabet = sf.get_semantic_robust_alphabet()
 
 
 class SELFIESProblem(ElementwiseProblem):
@@ -37,9 +41,14 @@ class SELFIESProblem(ElementwiseProblem):
 
         qed = QED.default(mol)
         logp = Crippen.MolLogP(mol)
-        sa = sascorer.calculateScore(mol)
+        try:
+            sa = sascorer.calculateScore(mol)
+        except Exception as e:
+            print(e)
+            print(x[0])
+            print(sf.decoder(x[0]))
 
-        out["F"] = np.array([qed, logp, sa], dtype=float)
+        out["F"] = np.array([-qed, -logp, sa], dtype=float)
 
 
 class SEFLIESSampling(Sampling):
@@ -59,6 +68,28 @@ class SELFIESCrossover(Crossover):
         # define the crossover: number of parents and number of offsprings
         super().__init__(2, 2)
 
+    def onepoint(self, parents: list) -> list:
+        split_parent_one = list(sf.split_selfies(parents[0]))
+        split_parent_two = list(sf.split_selfies(parents[1]))
+
+        cut_point_one = (
+            len(split_parent_one) // 2
+        )  # random.randint(0, len(split_parent_one))
+        cut_point_two = (
+            len(split_parent_two) // 2
+        )  # random.randint(0, len(split_parent_two))
+
+        parent_one_cut_one = split_parent_one[0:cut_point_one]
+        parent_one_cut_two = split_parent_one[cut_point_one : len(split_parent_one)]
+
+        parent_two_cut_one = split_parent_two[0:cut_point_two]
+        parent_two_cut_two = split_parent_two[cut_point_two : len(split_parent_two)]
+
+        child_one = "".join(parent_one_cut_one + parent_two_cut_two)
+        child_two = "".join(parent_one_cut_two + parent_two_cut_one)
+
+        return [child_one, child_two]
+
     def _do(self, problem, X, **kwargs):
         # The input of has the following shape (n_parents, n_matings, n_var)
         _, n_matings, n_var = X.shape
@@ -73,19 +104,10 @@ class SELFIESCrossover(Crossover):
             a, b = X[0, k, 0], X[1, k, 0]
 
             # prepare the offsprings
-            off_a = ["_"] * problem.n_characters
-            off_b = ["_"] * problem.n_characters
-
-            for i in range(problem.n_characters):
-                if np.random.random() < 0.5:
-                    off_a[i] = a[i]
-                    off_b[i] = b[i]
-                else:
-                    off_a[i] = b[i]
-                    off_b[i] = a[i]
+            offspring = self.onepoint([a, b])
 
             # join the character list and set the output
-            Y[0, k, 0], Y[1, k, 0] = "".join(off_a), "".join(off_b)
+            Y[0, k, 0], Y[1, k, 0] = offspring[0], offspring[1]
 
         return Y
 
@@ -94,26 +116,29 @@ class SELFIESMutation(Mutation):
     def __init__(self):
         super().__init__()
 
+    def mutate(self, sfi: str) -> str:
+        selfie_split = list(sf.split_selfies(sfi))
+
+        rnd_symbol = random.sample(list(alphabet), 1)[0]
+        rnd_ind = random.randint(0, len(selfie_split) - 1)
+        # print(f"Replacing random symbol at: {rnd_ind}, with: {rnd_symbol}")
+
+        selfie_split[rnd_ind] = rnd_symbol
+
+        return "".join(selfie_split)
+
     def _do(self, problem, X, **kwargs):
         # for each individual
         for i in range(len(X)):
             r = np.random.random()
 
-            # with a probabilty of 40% - change the order of characters
+            # with a probabilty of 40% - replace one random token
             if r < 0.4:
-                perm = np.random.permutation(problem.n_characters)
-                X[i, 0] = "".join(np.array([e for e in X[i, 0]])[perm])
-
-            # also with a probabilty of 40% - change a character randomly
-            elif r < 0.8:
-                prob = 1 / problem.n_characters
-                mut = [
-                    c
-                    if np.random.random() > prob
-                    else np.random.choice(problem.ALPHABET)
-                    for c in X[i, 0]
-                ]
-                X[i, 0] = "".join(mut)
+                try:
+                    X[i, 0] = self.mutate(X[i, 0])
+                except Exception as e:
+                    print(e)
+                    print(X[i, 0])
 
         return X
 
@@ -151,12 +176,14 @@ def main() -> None:
     res = minimize(
         SELFIESProblem(selfies=molecules["SELFIES"].to_numpy()),
         algorithm,
-        ("n_gen", 100),
+        ("n_gen", 30),
         seed=1,
         verbose=True,
     )
 
-    # plot results
+    results = res.X[np.argsort(res.F[:, 0])]
+    print(np.column_stack(results))
+    Scatter().add(res.F).show()
 
 
 if __name__ == "__main__":

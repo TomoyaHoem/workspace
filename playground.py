@@ -35,7 +35,7 @@ def mutate(sfi: str) -> str:
     selfie_split = list(sf.split_selfies(sfi))
 
     rnd_symbol = random.sample(list(alphabet), 1)[0]
-    rnd_ind = random.randint(0, len(selfie_split))
+    rnd_ind = random.randint(0, len(selfie_split) - 1)
     print(f"Replacing random symbol at: {rnd_ind}, with: {rnd_symbol}")
 
     selfie_split[rnd_ind] = rnd_symbol
@@ -47,28 +47,36 @@ def main() -> None:
     # load data
     start = time.time()
     # unpickle
-    molecules = pd.read_pickle("./pkl/100-fragments.pkl")
+    molecules = pd.read_pickle("./pkl/100-fragments-indicators.pkl")
+    print(molecules["QED"].max())
+    print(molecules["QED"].min())
 
-    # add selfies representation
-    molecules["SELFIES"] = molecules["Smiles"].apply(sf.encoder)
+    print(molecules["LogP"].max())
+    print(molecules["LogP"].min())
 
-    end = time.time()
-    dur = round(end - start, 3)
-    print(f"Elapsed time to unpickle and add SELFIES: {dur}s")
-    print(molecules.head())
+    print(molecules["SA"].max())
+    print(molecules["SA"].min())
 
-    mol = molecules["SELFIES"].sample(n=1).iloc[0]
-    print(f"Before: {mol}")
-    mol_mut = mutate(mol)
-    print(f"After: {mol_mut}")
+    # # add selfies representation
+    # molecules["SELFIES"] = molecules["Smiles"].apply(sf.encoder)
 
-    mol_prev = Chem.MolFromSmiles(sf.decoder(mol))
-    mol_new = Chem.MolFromSmiles(sf.decoder(mol_mut))
+    # end = time.time()
+    # dur = round(end - start, 3)
+    # print(f"Elapsed time to unpickle and add SELFIES: {dur}s")
+    # print(molecules.head())
 
-    img_prev = Draw.MolToImage(mol_prev)
-    img_prev.show()
-    img_new = Draw.MolToImage(mol_new)
-    img_new.show()
+    # mol = molecules["SELFIES"].sample(n=1).iloc[0]
+    # print(f"Before: {mol}")
+    # mol_mut = mutate(mol)
+    # print(f"After: {mol_mut}")
+
+    # # mol_prev = Chem.MolFromSmiles(sf.decoder(mol))
+    # # mol_new = Chem.MolFromSmiles(sf.decoder(mol_mut))
+
+    # # img_prev = Draw.MolToImage(mol_prev)
+    # # img_prev.show()
+    # # img_new = Draw.MolToImage(mol_new)
+    # # img_new.show()
 
     # parents = molecules["SELFIES"].sample(n=2, random_state=1)
     # children = onepoint(parents.values.tolist())
