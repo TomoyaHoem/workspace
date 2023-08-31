@@ -2,13 +2,93 @@ import pandas as pd
 import numpy as np
 import re
 from rdkit import Chem
+import random
+import time
+import selfies as sf
+from rdkit.Chem import Draw
+
+alphabet = sf.get_semantic_robust_alphabet()
+
+
+def onepoint(parents: list) -> list:
+    split_parent_one = list(sf.split_selfies(parents[0]))
+    split_parent_two = list(sf.split_selfies(parents[1]))
+
+    cut_point_one = random.randint(0, len(split_parent_one))
+    cut_point_two = random.randint(0, len(split_parent_two))
+
+    parent_one_cut_one = split_parent_one[0:cut_point_one]
+    parent_one_cut_two = split_parent_one[cut_point_one : len(split_parent_one)]
+
+    parent_two_cut_one = split_parent_two[0:cut_point_two]
+    parent_two_cut_two = split_parent_two[cut_point_two : len(split_parent_two)]
+
+    child_one = "".join(parent_one_cut_one + parent_two_cut_two)
+    child_two = "".join(parent_one_cut_two + parent_two_cut_one)
+
+    return [child_one, child_two]
+
+
+def mutate(sfi: str) -> str:
+    r = np.random.random()
+
+    selfie_split = list(sf.split_selfies(sfi))
+
+    rnd_symbol = random.sample(list(alphabet), 1)[0]
+    rnd_ind = random.randint(0, len(selfie_split))
+    print(f"Replacing random symbol at: {rnd_ind}, with: {rnd_symbol}")
+
+    selfie_split[rnd_ind] = rnd_symbol
+
+    return "".join(selfie_split)
 
 
 def main() -> None:
-    m = Chem.MolFromSmiles("O=[N+]O-H")
-    if m is None:
-        print("Invalid Molecule")
-        return
+    # load data
+    start = time.time()
+    # unpickle
+    molecules = pd.read_pickle("./pkl/100-fragments.pkl")
+
+    # add selfies representation
+    molecules["SELFIES"] = molecules["Smiles"].apply(sf.encoder)
+
+    end = time.time()
+    dur = round(end - start, 3)
+    print(f"Elapsed time to unpickle and add SELFIES: {dur}s")
+    print(molecules.head())
+
+    mol = molecules["SELFIES"].sample(n=1).iloc[0]
+    print(f"Before: {mol}")
+    mol_mut = mutate(mol)
+    print(f"After: {mol_mut}")
+
+    mol_prev = Chem.MolFromSmiles(sf.decoder(mol))
+    mol_new = Chem.MolFromSmiles(sf.decoder(mol_mut))
+
+    img_prev = Draw.MolToImage(mol_prev)
+    img_prev.show()
+    img_new = Draw.MolToImage(mol_new)
+    img_new.show()
+
+    # parents = molecules["SELFIES"].sample(n=2, random_state=1)
+    # children = onepoint(parents.values.tolist())
+
+    # print("Parents:")
+
+    # for parent in parents:
+    #     print(sf.decoder(parent))
+    #     mol = Chem.MolFromSmiles(sf.decoder(parent))
+    #     img = Draw.MolToImage(mol)
+    #     img.show()
+
+    # print("")
+    # print("Children:")
+
+    # for child in children:
+    #     print(sf.decoder(child))
+    #     mol = Chem.MolFromSmiles(sf.decoder(child))
+    #     img = Draw.MolToImage(mol)
+    #     img.show()
 
 
 if __name__ == "__main__":
