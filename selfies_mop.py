@@ -3,6 +3,8 @@ import os
 import sys
 import random
 
+from collections import Counter
+
 import pandas as pd
 import numpy as np
 
@@ -18,12 +20,16 @@ sys.path.append(os.path.join(RDConfig.RDContribDir, "SA_Score"))
 import sascorer  # type: ignore
 
 from pymoo.algorithms.moo.nsga2 import NSGA2
+from pymoo.algorithms.moo.nsga3 import NSGA3
+from pymoo.algorithms.moo.moead import MOEAD
+
 from pymoo.optimize import minimize
 from pymoo.core.problem import ElementwiseProblem
 from pymoo.core.sampling import Sampling
 from pymoo.core.crossover import Crossover
 from pymoo.core.mutation import Mutation
 from pymoo.core.duplicate import ElementwiseDuplicateElimination
+from pymoo.util.ref_dirs import get_reference_directions
 from pymoo.visualization.scatter import Scatter
 
 alphabet = sf.get_semantic_robust_alphabet()
@@ -149,7 +155,9 @@ class SELFIESDuplicateElimination(ElementwiseDuplicateElimination):
 
 
 def main() -> None:
-    print("NSGA2 in pymoo using SELFIES")
+    print("Pymoo MOP using SELFIES")
+    print("#" * 10)
+    print(f"Running {sys.argv[1]} \n")
 
     # load data
     start = time.time()
@@ -164,25 +172,55 @@ def main() -> None:
     print(f"Elapsed time to unpickle and add SELFIES: {dur}s")
     print(molecules.head())
 
-    # run pymoo nsga2
-    algorithm = NSGA2(
-        pop_size=100,
-        sampling=SEFLIESSampling(),
-        crossover=SELFIESCrossover(),
-        mutation=SELFIESMutation(),
-        eliminate_duplicates=SELFIESDuplicateElimination(),
-    )
+    alg = sys.argv[1]
+
+    if alg == "nsga2":
+        # run pymoo nsga2
+        algorithm = NSGA2(
+            pop_size=100,
+            sampling=SEFLIESSampling(),
+            crossover=SELFIESCrossover(),
+            mutation=SELFIESMutation(),
+            eliminate_duplicates=SELFIESDuplicateElimination(),
+        )
+    elif alg == "nsga3":
+        # create the reference directions to be used for the optimization
+        ref_dirs = get_reference_directions("das-dennis", 3, n_partitions=18)
+        # run pymoo nsga3
+        algorithm = NSGA3(
+            pop_size=190,
+            ref_dirs=ref_dirs,
+            sampling=SEFLIESSampling(),
+            crossover=SELFIESCrossover(),
+            mutation=SELFIESMutation(),
+            eliminate_duplicates=SELFIESDuplicateElimination(),
+        )
+    elif alg == "moead":
+        ref_dirs = get_reference_directions("uniform", 3, n_partitions=12)
+        # run pymoo moead
+        algorithm = MOEAD(
+            ref_dirs=ref_dirs,
+            n_neighbors=15,
+            prob_neighbor_mating=0.7,
+            sampling=SEFLIESSampling(),
+            crossover=SELFIESCrossover(),
+            mutation=SELFIESMutation(),
+        )
+    else:
+        print("ERROR: invalid argument")
+        return
 
     res = minimize(
         SELFIESProblem(selfies=molecules["SELFIES"].to_numpy()),
         algorithm,
-        ("n_gen", 30),
+        ("n_gen", 2),
         seed=1,
         verbose=True,
     )
 
     results = res.X[np.argsort(res.F[:, 0])]
     print(np.column_stack(results))
+    print(len(res.X))
     Scatter().add(res.F).show()
 
 
