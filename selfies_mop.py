@@ -7,6 +7,7 @@ from collections import Counter
 
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 import selfies as sf
 
@@ -162,7 +163,7 @@ def main() -> None:
     # load data
     start = time.time()
     # unpickle
-    molecules = pd.read_pickle("./pkl/100-fragments.pkl")
+    molecules = pd.read_pickle("./pkl/100-fragments-indicators.pkl")
 
     # add selfies representation
     molecules["SELFIES"] = molecules["Smiles"].apply(sf.encoder)
@@ -213,14 +214,63 @@ def main() -> None:
     res = minimize(
         SELFIESProblem(selfies=molecules["SELFIES"].to_numpy()),
         algorithm,
-        ("n_gen", 2),
+        ("n_gen", 30),
         seed=1,
         verbose=True,
     )
 
+    # add a column to separate pareto front
+    molecules["pareto"] = "#9C95994C"
+
     results = res.X[np.argsort(res.F[:, 0])]
     print(np.column_stack(results))
-    print(len(res.X))
+
+    # maximize objectives
+    for obj_vals in res.F:
+        obj_vals[0] *= -1
+        obj_vals[1] *= -1
+
+    mol_sample = molecules.sample(frac=0.1, random_state=1)
+
+    # add results to dataframe
+    for mol, obj in zip(res.X, res.F):
+        new_row = pd.DataFrame(
+            {
+                "Dir": "",
+                "File": "",
+                "Mol": "",
+                "SMILES": "",
+                "QED": obj[0],
+                "LogP": obj[1],
+                "SA": obj[2],
+                "SELFIES": mol,
+                "pareto": "#FF0022FF",
+            }
+        )
+        mol_sample = pd.concat([mol_sample, new_row], axis=0, ignore_index=True)
+
+    print(mol_sample.head(-10))
+
+    # plot data
+    # Creating figure
+    fig = plt.figure(figsize=(10, 6))
+    ax = plt.axes(projection="3d")
+
+    # Creating plot
+    ax.scatter(
+        mol_sample["QED"],
+        mol_sample["LogP"],
+        mol_sample["SA"],
+        color=mol_sample["pareto"],
+    )
+    ax.set_xlabel("QED", fontweight="bold")
+    ax.set_ylabel("LogP", fontweight="bold")
+    ax.set_zlabel("SA", fontweight="bold")
+    plt.title("MOP Result")
+
+    # show plot
+    plt.show()
+
     Scatter().add(res.F).show()
 
 

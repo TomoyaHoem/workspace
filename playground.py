@@ -44,18 +44,29 @@ def mutate(sfi: str) -> str:
 
 
 def main() -> None:
-    # load data
-    start = time.time()
-    # unpickle
-    molecules = pd.read_pickle("./pkl/100-fragments-indicators.pkl")
-    print(molecules["QED"].max())
-    print(molecules["QED"].min())
+    m = Chem.MolFromSmiles("O1CCOCC1")
+    if m is None:
+        print("Invalid Molecule")
+        return
 
-    print(molecules["LogP"].max())
-    print(molecules["LogP"].min())
+    print(sf.encoder("O1CCOCC1"))
 
-    print(molecules["SA"].max())
-    print(molecules["SA"].min())
+    img = Draw.MolToImage(m)
+    img.show()
+    img.save("eas.png")
+
+    # # load data
+    # start = time.time()
+    # # unpickle
+    # molecules = pd.read_pickle("./pkl/100-fragments-indicators.pkl")
+    # print(molecules["QED"].max())
+    # print(molecules["QED"].min())
+
+    # print(molecules["LogP"].max())
+    # print(molecules["LogP"].min())
+
+    # print(molecules["SA"].max())
+    # print(molecules["SA"].min())
 
     # # add selfies representation
     # molecules["SELFIES"] = molecules["Smiles"].apply(sf.encoder)
