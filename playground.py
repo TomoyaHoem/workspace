@@ -6,6 +6,8 @@ import random
 import time
 import selfies as sf
 from rdkit.Chem import Draw
+from rdkit.Chem import AllChem
+from rdkit import DataStructs
 
 alphabet = sf.get_semantic_robust_alphabet()
 
@@ -44,16 +46,16 @@ def mutate(sfi: str) -> str:
 
 
 def main() -> None:
-    m = Chem.MolFromSmiles("O1CCOCC1")
-    if m is None:
-        print("Invalid Molecule")
-        return
-
-    print(sf.encoder("O1CCOCC1"))
-
-    img = Draw.MolToImage(m)
-    img.show()
-    img.save("eas.png")
+    a = sf.decoder(
+        "[C][C][C][C][C][C][C][C@@H1][C][C][C][C][C][C][C][C][C][C@@H1][Branch1][#C+1][C][=O][C][C]"
+    )
+    b = sf.decoder(
+        "[C][C][C][C][C][C][C][C@@H1][C][=Branch3][C][C][C][Ring1][F][C][=C][C][=C][C][=C][Ring1][=Branch1]"
+    )
+    ofp = AllChem.GetMorganGenerator().GetFingerprint(Chem.MolFromSmiles(a))
+    pfp = AllChem.GetMorganGenerator().GetFingerprint(Chem.MolFromSmiles(b))
+    sim = DataStructs.TanimotoSimilarity(ofp, pfp)
+    print(sim)
 
     # # load data
     # start = time.time()

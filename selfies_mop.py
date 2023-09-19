@@ -22,7 +22,7 @@ import sascorer  # type: ignore
 
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.algorithms.moo.nsga3 import NSGA3
-from pymoo.algorithms.moo.moead import MOEAD
+from moead_div import MOEAD
 
 from pymoo.optimize import minimize
 from pymoo.core.problem import ElementwiseProblem
@@ -197,7 +197,7 @@ def main() -> None:
             eliminate_duplicates=SELFIESDuplicateElimination(),
         )
     elif alg == "moead":
-        ref_dirs = get_reference_directions("uniform", 3, n_partitions=12)
+        ref_dirs = get_reference_directions("uniform", 3, n_partitions=18)
         # run pymoo moead
         algorithm = MOEAD(
             ref_dirs=ref_dirs,
@@ -249,8 +249,6 @@ def main() -> None:
         )
         mol_sample = pd.concat([mol_sample, new_row], axis=0, ignore_index=True)
 
-    print(mol_sample.head(-10))
-
     # plot data
     # Creating figure
     fig = plt.figure(figsize=(10, 6))
@@ -271,7 +269,7 @@ def main() -> None:
     # show plot
     plt.show()
 
-    Scatter().add(res.F).show()
+    # Scatter().add(res.F).show()
 
 
 if __name__ == "__main__":
