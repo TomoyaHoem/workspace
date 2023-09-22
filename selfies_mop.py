@@ -165,12 +165,9 @@ def main() -> None:
     # unpickle
     molecules = pd.read_pickle("./pkl/100-fragments-indicators.pkl")
 
-    # add selfies representation
-    molecules["SELFIES"] = molecules["Smiles"].apply(sf.encoder)
-
     end = time.time()
     dur = round(end - start, 3)
-    print(f"Elapsed time to unpickle and add SELFIES: {dur}s")
+    print(f"Elapsed time to unpickle: {dur}s")
     print(molecules.head())
 
     alg = sys.argv[1]
@@ -197,7 +194,7 @@ def main() -> None:
             eliminate_duplicates=SELFIESDuplicateElimination(),
         )
     elif alg == "moead":
-        ref_dirs = get_reference_directions("uniform", 3, n_partitions=18)
+        ref_dirs = get_reference_directions("uniform", 3, n_partitions=15)
         # run pymoo moead
         algorithm = MOEAD(
             ref_dirs=ref_dirs,
@@ -210,6 +207,8 @@ def main() -> None:
     else:
         print("ERROR: invalid argument")
         return
+
+    # Scatter().add(ref_dirs).show()
 
     res = minimize(
         SELFIESProblem(selfies=molecules["SELFIES"].to_numpy()),
