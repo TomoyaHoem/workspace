@@ -163,7 +163,7 @@ def main() -> None:
     # load data
     start = time.time()
     # unpickle
-    molecules = pd.read_pickle("./pkl/100-fragments-indicators.pkl")
+    molecules = pd.read_pickle("./pkl/1%-fragments-indicators.pkl")
 
     end = time.time()
     dur = round(end - start, 3)
@@ -175,7 +175,7 @@ def main() -> None:
     if alg == "nsga2":
         # run pymoo nsga2
         algorithm = NSGA2(
-            pop_size=100,
+            pop_size=1000,
             sampling=SEFLIESSampling(),
             crossover=SELFIESCrossover(),
             mutation=SELFIESMutation(),
@@ -229,7 +229,7 @@ def main() -> None:
         obj_vals[0] *= -1
         obj_vals[1] *= -1
 
-    mol_sample = molecules.sample(frac=0.1, random_state=1)
+    mol_sample = molecules.sample(n=2500, random_state=1)
 
     # add results to dataframe
     for mol, obj in zip(res.X, res.F):
@@ -238,11 +238,11 @@ def main() -> None:
                 "Dir": "",
                 "File": "",
                 "Mol": "",
-                "SMILES": "",
+                "Smiles": "",
+                "SELFIES": mol,
                 "QED": obj[0],
                 "LogP": obj[1],
                 "SA": obj[2],
-                "SELFIES": mol,
                 "pareto": "#FF0022FF",
             }
         )

@@ -7,7 +7,7 @@ import selfies as sf
 from alive_progress import alive_bar
 
 TOTAL_NUM_MOLS = 15_000_000
-MOL_PERCENTAGE_PER_FILE = 0.03
+MOL_PERCENTAGE_PER_FILE = 0.01
 
 
 def SetDTypes(df):
@@ -55,7 +55,7 @@ def ReadMolsWithLimit(cwd) -> pd.DataFrame:
                     mol_row = {
                         "Dir": root[-2:],
                         "File": file,
-                        # "Mol": mol,
+                        "Mol": mol,
                         "Smiles": smile,
                         "SELFIES": sf.encoder(smile),
                     }
@@ -70,9 +70,6 @@ def ReadMolsWithLimit(cwd) -> pd.DataFrame:
 
 def main() -> None:
     print(f"--- Reading ZINC data ---")
-
-    # create dataframe
-    molecules = pd.DataFrame(columns=["Dir", "File", "Mol", "Smiles"])
 
     # read data from files into dataframe
     cwd = os.getcwd() + "\Fragments"
@@ -91,7 +88,7 @@ def main() -> None:
     print(molecules.head())
 
     # pickle dataframe
-    molecules.to_pickle("./pkl/10%-fragments.pkl")
+    molecules.to_pickle("./pkl/1%-fragments.pkl")
     print("--- Finished Pickling ---")
 
 
