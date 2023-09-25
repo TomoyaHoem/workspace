@@ -46,18 +46,10 @@ def mutate(sfi: str) -> str:
 
 
 def main() -> None:
-    # load data
-    start = time.time()
-    # unpickle
-    molecules = pd.read_pickle("./pkl/10%-fragments.pkl")
+    mol = "[C][C][C][C][#S][C][=C][C][=P][C][=C][Ring1][=Branch1][=Branch2][C][C][C][C][=C][C][=C][C][=C][Ring1][=Branch1][C][=C]"
+    smiles = sf.decoder(mol)
 
-    # add selfies representation
-    # molecules["SELFIES"] = molecules["Smiles"].apply(sf.encoder)
-
-    end = time.time()
-    dur = round(end - start, 3)
-    print(f"Elapsed time to unpickle and add SELFIES: {dur}s")
-    print(molecules.head())
+    print(smiles)
 
     # # load data
     # start = time.time()

@@ -31,9 +31,13 @@ from pymoo.core.crossover import Crossover
 from pymoo.core.mutation import Mutation
 from pymoo.core.duplicate import ElementwiseDuplicateElimination
 from pymoo.util.ref_dirs import get_reference_directions
+
 from pymoo.visualization.scatter import Scatter
+from pymoo.util.running_metric import RunningMetricAnimation
 
 alphabet = sf.get_semantic_robust_alphabet()
+
+SEED = 1
 
 
 class SELFIESProblem(ElementwiseProblem):
@@ -62,6 +66,7 @@ class SEFLIESSampling(Sampling):
     def _do(self, problem, n_samples, **kwargs):
         X = np.full((n_samples, 1), None, dtype=object)
 
+        random.seed = SEED
         sample = np.random.choice(problem.SELFIES, size=n_samples)
 
         for i in range(n_samples):
@@ -175,7 +180,7 @@ def main() -> None:
     if alg == "nsga2":
         # run pymoo nsga2
         algorithm = NSGA2(
-            pop_size=1000,
+            pop_size=100,
             sampling=SEFLIESSampling(),
             crossover=SELFIESCrossover(),
             mutation=SELFIESMutation(),
@@ -183,10 +188,9 @@ def main() -> None:
         )
     elif alg == "nsga3":
         # create the reference directions to be used for the optimization
-        ref_dirs = get_reference_directions("das-dennis", 3, n_partitions=18)
+        ref_dirs = get_reference_directions("das-dennis", 3, n_partitions=15)
         # run pymoo nsga3
         algorithm = NSGA3(
-            pop_size=190,
             ref_dirs=ref_dirs,
             sampling=SEFLIESSampling(),
             crossover=SELFIESCrossover(),
@@ -213,8 +217,9 @@ def main() -> None:
     res = minimize(
         SELFIESProblem(selfies=molecules["SELFIES"].to_numpy()),
         algorithm,
-        ("n_gen", 30),
-        seed=1,
+        ("n_gen", 1000),
+        seed=SEED,
+        save_history=True,
         verbose=True,
     )
 
@@ -269,6 +274,40 @@ def main() -> None:
     plt.show()
 
     # Scatter().add(res.F).show()
+
+    # Evaluation using Running Metric
+
+    hist = res.history
+    print(len(hist))
+
+    n_evals = []  # corresponding number of function evaluations\
+    hist_F = []  # the objective space values in each generation
+    hist_cv = []  # constraint violation in each generation
+    hist_cv_avg = []  # average constraint violation in the whole population
+
+    for algo in hist:
+        # store the number of function evaluations
+        n_evals.append(algo.evaluator.n_eval)
+
+        # retrieve the optimum from the algorithm
+        opt = algo.opt
+
+        # store the least contraint violation and the average in each population
+        hist_cv.append(opt.get("CV").min())
+        hist_cv_avg.append(algo.pop.get("CV").mean())
+
+        # filter out only the feasible and append and objective space values
+        feas = np.where(opt.get("feasible"))[0]
+        hist_F.append(opt.get("F")[feas])
+
+    # Running Metric
+
+    running = RunningMetricAnimation(
+        delta_gen=100, n_plots=10, key_press=False, do_show=True
+    )
+
+    for algorithm in res.history[:1000]:
+        running.update(algorithm)
 
 
 if __name__ == "__main__":
