@@ -4,6 +4,7 @@ import sys
 import random
 
 from collections import Counter
+from resultwriter import ResultWriter
 
 import pandas as pd
 import numpy as np
@@ -38,6 +39,7 @@ from pymoo.util.running_metric import RunningMetricAnimation
 alphabet = sf.get_semantic_robust_alphabet()
 
 SEED = 1
+NUM_ITERATIONS = 3
 
 # TODO Does not work might need to be implemented as constraint
 # remodel LogP to
@@ -92,6 +94,8 @@ class SEFLIESSampling(Sampling):
 
         for i in range(n_samples):
             X[i, 0] = sample[i]
+
+        print(X[:10, 0])
 
         return X
 
@@ -190,6 +194,8 @@ def print_help():
 
 def main() -> None:
     print("Pymoo MOP using SELFIES")
+    print("Passed args: ", end=" ")
+    print(*sys.argv[1:])
     print("# " * 10)
     print("")
 
@@ -201,7 +207,7 @@ def main() -> None:
         print("ERROR: invalid number of arguments please provide <Data Alg1 Alg2>.")
         return
 
-    algs = sys.argv[2:]
+    algs = sys.argv[2:-1]
     algorithms = []
 
     for alg in algs:
@@ -270,7 +276,7 @@ def main() -> None:
     print(molecules.head())
     print("")
 
-    # * III. Run algorithms and create sheets
+    # * III. Run Algorithms
 
     results = []
 
@@ -279,7 +285,19 @@ def main() -> None:
 
     # * IV. Store Results
 
-    print("Storing Results")
+    rw = ResultWriter(results)
+
+    last_arg = sys.argv[-1]
+
+    if last_arg == "-s" or last_arg == "-sp" or last_arg == "-ps":
+        print("Storing Results")
+        rw.store_data()
+
+    # * V. Print Results
+
+    if last_arg == "-p" or last_arg == "-sp" or last_arg == "-ps":
+        print("Printing Results...")
+        rw.print_data()
 
     print("# " * 10)
     print("Finished Execution")
@@ -290,7 +308,7 @@ def run_alg(molecules, algorithm, alg: str):
     res = minimize(
         SELFIESProblem(selfies=molecules["SELFIES"].to_numpy()),
         algorithm,
-        ("n_gen", 30),
+        ("n_gen", NUM_ITERATIONS),
         seed=SEED,
         save_history=True,
         verbose=True,

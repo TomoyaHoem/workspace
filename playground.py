@@ -69,8 +69,9 @@ def mutate(sfi: str) -> str:
 def main() -> None:
     a = [-5, -4, -1, -0.1, 0, 0.1, 1, 2, 5, 10, 15, 17, 19, 20, 30]
 
-    for i in a:
-        print(f"{i: } {modified_logp(i)}")
+    b = a[1:-1]
+
+    print(b)
 
     # # load data
     # start = time.time()
