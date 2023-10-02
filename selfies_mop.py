@@ -195,6 +195,8 @@ def main() -> None:
 
     # * I. Parse algorithms
 
+    print("Parsing Algorithms...")
+
     if len(sys.argv) < 3:
         print("ERROR: invalid number of arguments please provide <Data Alg1 Alg2>.")
         return
@@ -203,7 +205,7 @@ def main() -> None:
     algorithms = []
 
     for alg in algs:
-        print(f"Read {alg}")
+        print(f"Read {alg.upper()}")
         if alg == "nsga2":
             # run pymoo nsga2
             algorithm = NSGA2(
@@ -275,12 +277,16 @@ def main() -> None:
     for alg_n, alg in zip(algs, algorithms):
         results.append(run_alg(molecules, alg, alg_n))
 
+    # * IV. Store Results
+
+    print("Storing Results")
+
     print("# " * 10)
     print("Finished Execution")
 
 
 def run_alg(molecules, algorithm, alg: str):
-    print(f"Running {alg}")
+    print(f"Running {alg.upper()}...")
     res = minimize(
         SELFIESProblem(selfies=molecules["SELFIES"].to_numpy()),
         algorithm,
@@ -290,7 +296,7 @@ def run_alg(molecules, algorithm, alg: str):
         verbose=True,
     )
 
-    print(f"Finished {alg}")
+    print(f"Finished {alg.upper()}")
     print("")
 
     return res
