@@ -39,6 +39,27 @@ alphabet = sf.get_semantic_robust_alphabet()
 
 SEED = 1
 
+# TODO Does not work might need to be implemented as constraint
+# remodel LogP to
+# f(x) = -0.5x + 0.5 for x < 1
+# h(x) = 5 ^ ((x - 20) / 10) for x < 20
+# 1 else
+# def modified_logp(mol: Chem.rdchem.Mol):
+#     logP = Crippen.MolLogP(mol)
+
+#     m_logp = 0
+
+#     if logP < -1:
+#         m_logp = 1
+#     elif logP < 1:
+#         m_logp = -0.5 * logP + 0.5
+#     elif logP < 20:
+#         m_logp = 5 ** ((logP - 20) / 10)
+#     else:
+#         m_logp = 1
+
+#     return m_logp
+
 
 class SELFIESProblem(ElementwiseProblem):
     def __init__(self, selfies):
@@ -51,7 +72,7 @@ class SELFIESProblem(ElementwiseProblem):
         mol = Chem.MolFromSmiles(sf.decoder(x[0]))
 
         qed = QED.default(mol)
-        logp = Crippen.MolLogP(mol)
+        m_logp = Crippen.MolLogP(mol)
         try:
             sa = sascorer.calculateScore(mol)
         except Exception as e:
@@ -59,14 +80,14 @@ class SELFIESProblem(ElementwiseProblem):
             print(x[0])
             print(sf.decoder(x[0]))
 
-        out["F"] = np.array([-qed, -logp, sa], dtype=float)
+        out["F"] = np.array([-qed, -m_logp, sa], dtype=float)
 
 
 class SEFLIESSampling(Sampling):
     def _do(self, problem, n_samples, **kwargs):
         X = np.full((n_samples, 1), None, dtype=object)
 
-        random.seed = SEED
+        np.random.seed(SEED)
         sample = np.random.choice(problem.SELFIES, size=n_samples)
 
         for i in range(n_samples):
@@ -160,74 +181,122 @@ class SELFIESDuplicateElimination(ElementwiseDuplicateElimination):
         return a.X[0] == b.X[0]
 
 
+def print_help():
+    """
+    Arguments: Data Algorithm1 Algorithm2
+    """
+    print("")
+
+
 def main() -> None:
     print("Pymoo MOP using SELFIES")
-    print("#" * 10)
-    print(f"Running {sys.argv[1]} \n")
+    print("# " * 10)
+    print("")
+
+    # * I. Parse algorithms
+
+    if len(sys.argv) < 3:
+        print("ERROR: invalid number of arguments please provide <Data Alg1 Alg2>.")
+        return
+
+    algs = sys.argv[2:]
+    algorithms = []
+
+    for alg in algs:
+        print(f"Read {alg}")
+        if alg == "nsga2":
+            # run pymoo nsga2
+            algorithm = NSGA2(
+                pop_size=100,
+                sampling=SEFLIESSampling(),
+                crossover=SELFIESCrossover(),
+                mutation=SELFIESMutation(),
+                eliminate_duplicates=SELFIESDuplicateElimination(),
+            )
+        elif alg == "nsga3":
+            # create the reference directions to be used for the optimization
+            ref_dirs = get_reference_directions("das-dennis", 3, n_partitions=15)
+            # run pymoo nsga3
+            algorithm = NSGA3(
+                ref_dirs=ref_dirs,
+                sampling=SEFLIESSampling(),
+                crossover=SELFIESCrossover(),
+                mutation=SELFIESMutation(),
+                eliminate_duplicates=SELFIESDuplicateElimination(),
+            )
+        elif alg == "moead":
+            ref_dirs = get_reference_directions("uniform", 3, n_partitions=15)
+            # run pymoo moead
+            algorithm = MOEAD(
+                ref_dirs=ref_dirs,
+                n_neighbors=15,
+                prob_neighbor_mating=0.7,
+                sampling=SEFLIESSampling(),
+                crossover=SELFIESCrossover(),
+                mutation=SELFIESMutation(),
+            )
+        else:
+            print(f"ERROR: invalid argument: {alg}")
+            return
+        algorithms.append(algorithm)
+
+    # * II. Parse data
+
+    print("")
+    print("Reading Data...")
 
     # load data
     start = time.time()
-    # unpickle
-    molecules = pd.read_pickle("./pkl/1%-fragments-indicators.pkl")
+
+    data = sys.argv[1]
+    if data == "fragments":
+        # unpickle
+        molecules = pd.read_pickle("./pkl/1%-fragments-indicators.pkl")
+
+        # add a column to separate pareto front
+        molecules["pareto"] = "#9C95994C"
+    elif data == "druglike":
+        # TODO add druglike data
+        return
+    else:
+        print("ERROR: invalid data name")
+        return
 
     end = time.time()
     dur = round(end - start, 3)
     print(f"Elapsed time to unpickle: {dur}s")
     print(molecules.head())
+    print("")
 
-    alg = sys.argv[1]
+    # * III. Run algorithms and create sheets
 
-    if alg == "nsga2":
-        # run pymoo nsga2
-        algorithm = NSGA2(
-            pop_size=100,
-            sampling=SEFLIESSampling(),
-            crossover=SELFIESCrossover(),
-            mutation=SELFIESMutation(),
-            eliminate_duplicates=SELFIESDuplicateElimination(),
-        )
-    elif alg == "nsga3":
-        # create the reference directions to be used for the optimization
-        ref_dirs = get_reference_directions("das-dennis", 3, n_partitions=15)
-        # run pymoo nsga3
-        algorithm = NSGA3(
-            ref_dirs=ref_dirs,
-            sampling=SEFLIESSampling(),
-            crossover=SELFIESCrossover(),
-            mutation=SELFIESMutation(),
-            eliminate_duplicates=SELFIESDuplicateElimination(),
-        )
-    elif alg == "moead":
-        ref_dirs = get_reference_directions("uniform", 3, n_partitions=15)
-        # run pymoo moead
-        algorithm = MOEAD(
-            ref_dirs=ref_dirs,
-            n_neighbors=15,
-            prob_neighbor_mating=0.7,
-            sampling=SEFLIESSampling(),
-            crossover=SELFIESCrossover(),
-            mutation=SELFIESMutation(),
-        )
-    else:
-        print("ERROR: invalid argument")
-        return
+    results = []
 
-    # Scatter().add(ref_dirs).show()
+    for alg_n, alg in zip(algs, algorithms):
+        results.append(run_alg(molecules, alg, alg_n))
 
+    print("# " * 10)
+    print("Finished Execution")
+
+
+def run_alg(molecules, algorithm, alg: str):
+    print(f"Running {alg}")
     res = minimize(
         SELFIESProblem(selfies=molecules["SELFIES"].to_numpy()),
         algorithm,
-        ("n_gen", 1000),
+        ("n_gen", 30),
         seed=SEED,
         save_history=True,
         verbose=True,
     )
 
-    # add a column to separate pareto front
-    molecules["pareto"] = "#9C95994C"
+    print(f"Finished {alg}")
+    print("")
+
+    return res
 
     results = res.X[np.argsort(res.F[:, 0])]
-    print(np.column_stack(results))
+    # print(np.column_stack(results))
 
     # maximize objectives
     for obj_vals in res.F:
@@ -278,35 +347,12 @@ def main() -> None:
     # Evaluation using Running Metric
 
     hist = res.history
-    print(len(hist))
-
-    n_evals = []  # corresponding number of function evaluations\
-    hist_F = []  # the objective space values in each generation
-    hist_cv = []  # constraint violation in each generation
-    hist_cv_avg = []  # average constraint violation in the whole population
-
-    for algo in hist:
-        # store the number of function evaluations
-        n_evals.append(algo.evaluator.n_eval)
-
-        # retrieve the optimum from the algorithm
-        opt = algo.opt
-
-        # store the least contraint violation and the average in each population
-        hist_cv.append(opt.get("CV").min())
-        hist_cv_avg.append(algo.pop.get("CV").mean())
-
-        # filter out only the feasible and append and objective space values
-        feas = np.where(opt.get("feasible"))[0]
-        hist_F.append(opt.get("F")[feas])
-
-    # Running Metric
 
     running = RunningMetricAnimation(
-        delta_gen=100, n_plots=10, key_press=False, do_show=True
+        delta_gen=10, n_plots=10, key_press=True, do_show=True
     )
 
-    for algorithm in res.history[:1000]:
+    for algorithm in hist[:100]:
         running.update(algorithm)
 
 

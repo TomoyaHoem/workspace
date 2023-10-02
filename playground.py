@@ -7,9 +7,30 @@ import time
 import selfies as sf
 from rdkit.Chem import Draw
 from rdkit.Chem import AllChem
+from rdkit.Chem import Crippen
 from rdkit import DataStructs
 
+
 alphabet = sf.get_semantic_robust_alphabet()
+
+np.random.seed(1)
+
+
+def modified_logp(a):
+    logP = a
+
+    m_logp = 0
+
+    if logP < -1:
+        m_logp = 1
+    elif logP < 1:
+        m_logp = -0.5 * logP + 0.5
+    elif logP < 20:
+        m_logp = 5 ** ((logP - 20) / 10)
+    else:
+        m_logp = 1
+
+    return m_logp
 
 
 def onepoint(parents: list) -> list:
@@ -46,10 +67,10 @@ def mutate(sfi: str) -> str:
 
 
 def main() -> None:
-    mol = "[C][C][C][C][#S][C][=C][C][=P][C][=C][Ring1][=Branch1][=Branch2][C][C][C][C][=C][C][=C][C][=C][Ring1][=Branch1][C][=C]"
-    smiles = sf.decoder(mol)
+    a = [-5, -4, -1, -0.1, 0, 0.1, 1, 2, 5, 10, 15, 17, 19, 20, 30]
 
-    print(smiles)
+    for i in a:
+        print(f"{i: } {modified_logp(i)}")
 
     # # load data
     # start = time.time()
