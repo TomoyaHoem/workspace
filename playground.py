@@ -67,11 +67,10 @@ def mutate(sfi: str) -> str:
 
 
 def main() -> None:
-    a = [-5, -4, -1, -0.1, 0, 0.1, 1, 2, 5, 10, 15, 17, 19, 20, 30]
+    a = [("a", "b"), ("a", "c"), ("x", "f")]
 
-    b = a[1:-1]
-
-    print(b)
+    for i, f in enumerate(a):
+        print(f)
 
     # # load data
     # start = time.time()

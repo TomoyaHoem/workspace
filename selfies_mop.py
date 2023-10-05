@@ -34,12 +34,13 @@ from pymoo.core.duplicate import ElementwiseDuplicateElimination
 from pymoo.util.ref_dirs import get_reference_directions
 
 from pymoo.visualization.scatter import Scatter
-from pymoo.util.running_metric import RunningMetricAnimation
+
 
 alphabet = sf.get_semantic_robust_alphabet()
 
 SEED = 1
 NUM_ITERATIONS = 3
+POP_SIZE = 100
 
 # TODO Does not work might need to be implemented as constraint
 # remodel LogP to
@@ -213,7 +214,7 @@ def main() -> None:
         if alg == "nsga2":
             # run pymoo nsga2
             algorithm = NSGA2(
-                pop_size=100,
+                pop_size=POP_SIZE,
                 sampling=SEFLIESSampling(),
                 crossover=SELFIESCrossover(),
                 mutation=SELFIESMutation(),
@@ -283,7 +284,17 @@ def main() -> None:
 
     # * IV. Store Results
 
-    rw = ResultWriter(results, "test.xlsx")
+    sets = [
+        ("Data", data),
+        ("Seed", SEED),
+        ("Pop_size", POP_SIZE),
+        ("N_Gen", NUM_ITERATIONS),
+        ("Sampling", "Random uniform"),
+        ("Crossover", "1-point, 100%"),
+        ("Mutation", "Random replace, 40%"),
+    ]
+
+    rw = ResultWriter(molecules, results, sets, "test.xlsx")
 
     last_arg = sys.argv[-1]
 
