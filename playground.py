@@ -67,10 +67,10 @@ def mutate(sfi: str) -> str:
 
 
 def main() -> None:
-    a = [("a", "b"), ("a", "c"), ("x", "f")]
+    a = ["A", "B", "C", "D"]
 
-    for i, f in enumerate(a):
-        print(f)
+    for one, two in zip(a, a[1:]):
+        print(f"First {one}, Second {two}")
 
     # # load data
     # start = time.time()

@@ -12,6 +12,8 @@ from rdkit.Chem import Draw
 
 from running_metric_ret import RunningMetricAnimation
 
+colors = ["#FF0000", "#00FF0A", "#383FFF"]
+
 
 # Create and store formats in dictionary
 def get_format_dict(workbook: xlsxwriter.workbook) -> dict:
@@ -150,11 +152,80 @@ def resize(image: Image, size: tuple[int, int], format="JPEG"):
     return buffer_image(image, format)
 
 
+def compare_data(molecules: pd.DataFrame, results: list):
+    # I. Pareto
+
+    initial_population = [x.X[0] for x in results[0].history[0].pop]
+    mol_sample = molecules.loc[molecules["SELFIES"].isin(initial_population)]
+
+    for res, col in zip(results, colors):
+        res.X[np.argsort(res.F[:, 0])]
+        # add results to dataframe
+        for mol, obj in zip(res.X, res.F):
+            new_row = pd.DataFrame(
+                {
+                    "Dir": "",
+                    "File": "",
+                    "Mol": "",
+                    "Smiles": "",
+                    "SELFIES": mol,
+                    "QED": obj[0],
+                    "LogP": obj[1],
+                    "SA": obj[2],
+                    "pareto": col,
+                    "alg": res.algorithm.__class__.__name__,
+                }
+            )
+            mol_sample = pd.concat([mol_sample, new_row], axis=0, ignore_index=True)
+
+    # Creating figure
+    fig = plt.figure(figsize=(10, 6))
+    ax = plt.axes(projection="3d")
+
+    # Creating plot
+    sc = ax.scatter(
+        mol_sample["QED"],
+        mol_sample["LogP"],
+        mol_sample["SA"],
+        color=mol_sample["pareto"],
+    )
+    ax.set_xlabel("QED", fontweight="bold")
+    ax.set_ylabel("LogP", fontweight="bold")
+    ax.set_zlabel("SA", fontweight="bold")
+    plt.legend(["Initial Pop", "NSGA2", "NSGA3"])
+    plt.title(f"MOP Result for different Algorithms")
+
+    ax.view_init(elev=10.0, azim=-20.0)
+
+    imgdata_p = io.BytesIO()
+    fig.savefig(imgdata_p, format="JPEG")
+
+    # II. Running
+    r_data = []
+    for res in results:
+        running = RunningMetricAnimation(
+            delta_gen=10, n_plots=3, key_press=False, do_show=False
+        )
+        for algorithm in res.history[:30]:
+            running.update(algorithm)
+        r_data.append(running.data[-1:])
+
+    fig, ax = plt.subplots()
+    fig.set_size_inches(12, 6.5)
+    for d in r_data:
+        running.draw(d, ax)
+    imgdata_r = io.BytesIO()
+    fig.savefig(imgdata_r, format="JPEG")
+
+    return imgdata_p, imgdata_r
+
+
 class ResultWriter:
     def __init__(
         self, molecules: pd.DataFrame, results: list, sets: list, filename: str
     ) -> None:
         self.data = []
+        self.comp = ()
         self.filename = filename
         # result data setup
         for res in results:
@@ -171,6 +242,8 @@ class ResultWriter:
             # running metric plots
             cur.append(running_plots(res))
             self.data.append(cur)
+        if len(results) > 1:
+            self.comp = compare_data(molecules, results)
 
     def store_data(self):
         workbook = xlsxwriter.Workbook(self.filename)
@@ -253,6 +326,23 @@ class ResultWriter:
                     "format": formats["filler"],
                 },
             )
+
+        if self.comp:
+            worksheet = workbook.add_worksheet("Comparison")
+            # I. Pareto comparison
+            d = {
+                "x_scale": 200 / image.width,
+                "y_scale": 202 / image.height,
+                "object_position": 1,
+            }
+            worksheet.insert_image("A1", "", {"image_data": self.comp[0], **d})
+            # II. Running Metric comparison
+            d = {
+                "x_scale": 200 / image.width,
+                "y_scale": 202 / image.height,
+                "object_position": 1,
+            }
+            worksheet.insert_image("A20", "", {"image_data": self.comp[1], **d})
 
         workbook.close()
 
