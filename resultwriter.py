@@ -10,7 +10,7 @@ import selfies as sf
 from rdkit import Chem
 from rdkit.Chem import Draw
 
-from pymoo.util.running_metric import RunningMetricAnimation
+from running_metric_ret import RunningMetricAnimation
 
 
 # Create and store formats in dictionary
@@ -103,40 +103,35 @@ def pareto_plot(molecules: pd.DataFrame, res: list) -> Image:
     ax.set_xlabel("QED", fontweight="bold")
     ax.set_ylabel("LogP", fontweight="bold")
     ax.set_zlabel("SA", fontweight="bold")
-    plt.title("MOP Result")
+    plt.title(f"MOP Result - {len(res.F[:, 0])} Pareto members")
 
     ax.view_init(elev=10.0, azim=-20.0)
-    plt.show()  # TODO for testing purposes, extract later to print method
+    # plt.show()  # TODO for testing purposes, extract later to print method
 
     imgdata = io.BytesIO()
     fig.savefig(imgdata, format="JPEG")
     return imgdata
-
-    # # Evaluation using Running Metric
-
-    # hist = res.history
-
-    # running = RunningMetricAnimation(
-    #     delta_gen=10, n_plots=10, key_press=True, do_show=True
-    # )
-
-    # for algorithm in hist[:100]:
-    #     running.update(algorithm)
 
 
 def running_plots(res: list):
     hist = res.history
 
     running = RunningMetricAnimation(
-        delta_gen=30, n_plots=1, key_press=True, do_show=True
+        delta_gen=10, n_plots=3, key_press=True, do_show=True
     )
 
     for algorithm in hist[:30]:
         running.update(algorithm)
 
+    # plot with only full iterations
+    fig, ax = plt.subplots()
+    running.draw(running.data[-1:], ax)
+
     imgdata = io.BytesIO()
-    # fig.savefig(imgdata, format="JPEG")
-    return imgdata, imgdata
+    fig.set_size_inches(12, 6.5)
+    fig.savefig(imgdata, format="JPEG")
+
+    return running.plots[-1], imgdata
 
 
 def buffer_image(image: Image, format: str = "JPEG"):
@@ -225,25 +220,25 @@ class ResultWriter:
 
             # V. Running Metric
             # a)
-            worksheet.merge_range("H29:N29", "R-METRIC ALL", formats["header"])
-            worksheet.merge_range("H30:N47", ".", formats["img"])
+            worksheet.merge_range("H25:S25", "R-METRIC ALL", formats["header"])
+            worksheet.merge_range("H26:S46", ".", formats["img"])
             # Add running all
             d = {
                 "x_scale": 200 / image.width,
-                "y_scale": 200 / image.height,
+                "y_scale": 202 / image.height,
                 "object_position": 1,
             }
-            worksheet.insert_image("H30", "", {"image_data": data[4], **d})
+            worksheet.insert_image("H26", "", {"image_data": data[4][0], **d})
             # b)
-            worksheet.merge_range("P29:V29", "R-METRIC LAST", formats["header"])
-            worksheet.merge_range("P30:V47", ".", formats["img"])
+            worksheet.merge_range("H50:S50", "R-METRIC LAST", formats["header"])
+            worksheet.merge_range("H51:S71", ".", formats["img"])
             # Add running last
             d = {
                 "x_scale": 200 / image.width,
-                "y_scale": 200 / image.height,
+                "y_scale": 202 / image.height,
                 "object_position": 1,
             }
-            worksheet.insert_image("P30", "", {"image_data": data[4], **d})
+            worksheet.insert_image("H51", "", {"image_data": data[4][1], **d})
 
             # VI. Filler
             last += 11
