@@ -74,15 +74,6 @@ class RunningMetricAnimation(AnimationCallback):
         self.delta_gen = delta_gen
         self.key_press = key_press
         self.data = SlidingWindow(n_plots)
-        self._plots = []
-
-    @property
-    def plots(self):
-        return self._plots
-
-    @plots.setter
-    def plots(self, value):
-        self._plots.append(value)
 
     def draw(self, data, ax):
         for tau, x, f, v in data[:-1]:
@@ -134,9 +125,5 @@ class RunningMetricAnimation(AnimationCallback):
                 fig.canvas.mpl_connect("key_press_event", press)
 
                 plt.draw()
-                imgdata = io.BytesIO()
-                plt.gcf().set_size_inches(12, 6.5)
-                plt.gcf().savefig(imgdata, format="JPEG")
-                self.plots = imgdata
                 plt.waitforbuttonpress()
                 plt.close("all")

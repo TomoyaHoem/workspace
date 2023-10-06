@@ -117,7 +117,7 @@ def running_plots(res: list):
     hist = res.history
 
     running = RunningMetricAnimation(
-        delta_gen=10, n_plots=3, key_press=True, do_show=True
+        delta_gen=10, n_plots=3, key_press=False, do_show=False
     )
 
     for algorithm in hist[:30]:
@@ -125,13 +125,17 @@ def running_plots(res: list):
 
     # plot with only full iterations
     fig, ax = plt.subplots()
-    running.draw(running.data[-1:], ax)
-
-    imgdata = io.BytesIO()
     fig.set_size_inches(12, 6.5)
-    fig.savefig(imgdata, format="JPEG")
+    running.draw(running.data, ax)
+    imgdata_f = io.BytesIO()
+    fig.savefig(imgdata_f, format="JPEG")
+    fig, ax = plt.subplots()
+    fig.set_size_inches(12, 6.5)
+    running.draw(running.data[-1:], ax)
+    imgdata_l = io.BytesIO()
+    fig.savefig(imgdata_l, format="JPEG")
 
-    return running.plots[-1], imgdata
+    return imgdata_f, imgdata_l
 
 
 def buffer_image(image: Image, format: str = "JPEG"):
