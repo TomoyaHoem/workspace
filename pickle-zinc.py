@@ -72,7 +72,7 @@ def main() -> None:
     print(f"--- Reading ZINC data ---")
 
     # read data from files into dataframe
-    cwd = os.getcwd() + "\Fragments"
+    cwd = os.path.join(os.getcwd(), "Fragments")
     # current index to store in dataframe
     molecules = ReadMolsWithLimit(cwd)
 
