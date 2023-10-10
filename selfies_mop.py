@@ -39,7 +39,7 @@ from pymoo.visualization.scatter import Scatter
 alphabet = sf.get_semantic_robust_alphabet()
 
 SEED = 1
-NUM_ITERATIONS = 100
+NUM_ITERATIONS = 3
 POP_SIZE = 100
 
 # TODO Does not work might need to be implemented as constraint
@@ -283,6 +283,12 @@ def main() -> None:
 
     for alg_n, alg in zip(algs, algorithms):
         r = run_alg(molecules, alg, alg_n)
+
+        # maximize objectives
+        for obj_vals in r.F:
+            obj_vals[0] *= -1
+            obj_vals[1] *= -1
+
         results.append(r)
         sets.append(
             [
@@ -302,14 +308,14 @@ def main() -> None:
     last_arg = sys.argv[-1]
 
     if last_arg == "-s" or last_arg == "-sp" or last_arg == "-ps":
-        print("Storing Results")
+        print("Storing Results...")
         rw.store_data()
 
     # * V. Print Results
 
     if last_arg == "-p" or last_arg == "-sp" or last_arg == "-ps":
         print("Printing Results...")
-        rw.print_data()
+        rw.print_data(molecules, results, NUM_ITERATIONS)
 
     print("# " * 10)
     print("Finished Execution")

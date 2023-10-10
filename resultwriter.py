@@ -63,13 +63,8 @@ def get_format_dict(workbook: xlsxwriter.workbook) -> dict:
     return formats
 
 
-def pareto_plot(molecules: pd.DataFrame, res: list) -> Image:
+def pareto_plot(molecules: pd.DataFrame, res: list, plot=False) -> Image:
     res.X[np.argsort(res.F[:, 0])]
-
-    # maximize objectives
-    for obj_vals in res.F:
-        obj_vals[0] *= -1
-        obj_vals[1] *= -1
 
     initial_population = [x.X[0] for x in res.history[0].pop]
     mol_sample = molecules.loc[molecules["SELFIES"].isin(initial_population)]
@@ -108,10 +103,12 @@ def pareto_plot(molecules: pd.DataFrame, res: list) -> Image:
     plt.title(f"MOP Result - {len(res.F[:, 0])} Pareto members")
 
     ax.view_init(elev=10.0, azim=-20.0)
-    # plt.show()  # TODO for testing purposes, extract later to print method
+    if plot:
+        plt.show()
 
     imgdata = io.BytesIO()
     fig.savefig(imgdata, format="JPEG")
+
     return imgdata
 
 
@@ -154,7 +151,7 @@ def resize(image: Image, size: tuple[int, int], format="JPEG"):
     return buffer_image(image, format)
 
 
-def compare_data(molecules: pd.DataFrame, results: list, num_iter):
+def compare_data(molecules: pd.DataFrame, results: list, num_iter, plot=False):
     # I. Pareto
 
     initial_population = [x.X[0] for x in results[0].history[0].pop]
@@ -195,6 +192,9 @@ def compare_data(molecules: pd.DataFrame, results: list, num_iter):
     plt.title(f"MOP Result for different Algorithms")
 
     ax.view_init(elev=14.0, azim=55.0)
+
+    if plot:
+        plt.show()
 
     imgdata_p = io.BytesIO()
     fig.savefig(imgdata_p, format="JPEG")
@@ -254,7 +254,7 @@ class ResultWriter:
             # store alg name
             cur.append(res.algorithm.__class__.__name__ + " Data")
             # store top n individuals
-            topN = res.X[np.argsort(res.F[:, 0])][:10]
+            topN = res.X[np.argsort(res.F[:, 0])][:100]
             cur.append(topN)
             # alg settings
             cur.append(s)
@@ -367,5 +367,8 @@ class ResultWriter:
 
         workbook.close()
 
-    def print_data(self):
-        print("print res")
+    def print_data(self, molecules: pd.DataFrame, results: list, num_iter):
+        for res in results:
+            pareto_plot(molecules, res, plot=True)
+        if len(results) > 1:
+            compare_data(molecules, results, num_iter, plot=True)
