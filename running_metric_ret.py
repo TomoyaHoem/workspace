@@ -96,6 +96,27 @@ class RunningMetricAnimation(AnimationCallback):
         ax.set_ylabel("$\Delta \, f$", rotation=0)
         ax.yaxis.set_label_coords(-0.075, 0.5)
 
+    def draw_comp(self, data, ax):
+        for tau, x, f, v in data[:-1]:
+            ax.plot(x, f, label=tau, alpha=0.6, linewidth=3)
+
+        tau, x, f, v = data[-1]
+        ax.plot(x, f, label=tau, alpha=0.9, linewidth=3)
+
+        for k in range(len(v)):
+            if v[k]:
+                ax.plot(
+                    [k + 1, k + 1], [0, f[k]], color="black", linewidth=0.5, alpha=0.5
+                )
+                ax.plot([k + 1], [f[k]], "o", color="black", alpha=0.5, markersize=2)
+
+        # ax.set_yscale("symlog")
+        ax.legend()
+
+        ax.set_xlabel("Generation")
+        ax.set_ylabel("$\Delta \, f$", rotation=0)
+        ax.yaxis.set_label_coords(-0.075, 0.5)
+
     def do(self, _, algorithm, force_plot=False, **kwargs):
         running = self.running
 

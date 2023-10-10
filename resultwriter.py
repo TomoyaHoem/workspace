@@ -115,14 +115,16 @@ def pareto_plot(molecules: pd.DataFrame, res: list) -> Image:
     return imgdata
 
 
-def running_plots(res: list):
+def running_plots(res: list, num_iter):
     hist = res.history
 
+    delta, num_p = r_plot_data(num_iter)
+
     running = RunningMetricAnimation(
-        delta_gen=10, n_plots=3, key_press=False, do_show=False
+        delta_gen=delta, n_plots=num_p, key_press=False, do_show=False
     )
 
-    for algorithm in hist[:30]:
+    for algorithm in hist[:num_iter]:
         running.update(algorithm)
 
     # plot with only full iterations
@@ -152,11 +154,12 @@ def resize(image: Image, size: tuple[int, int], format="JPEG"):
     return buffer_image(image, format)
 
 
-def compare_data(molecules: pd.DataFrame, results: list):
+def compare_data(molecules: pd.DataFrame, results: list, num_iter):
     # I. Pareto
 
     initial_population = [x.X[0] for x in results[0].history[0].pop]
     mol_sample = molecules.loc[molecules["SELFIES"].isin(initial_population)]
+    mol_sample["alg"] = "Initial Pop"
 
     for res, col in zip(results, colors):
         res.X[np.argsort(res.F[:, 0])]
@@ -183,41 +186,59 @@ def compare_data(molecules: pd.DataFrame, results: list):
     ax = plt.axes(projection="3d")
 
     # Creating plot
-    sc = ax.scatter(
-        mol_sample["QED"],
-        mol_sample["LogP"],
-        mol_sample["SA"],
-        color=mol_sample["pareto"],
-    )
+    for alg, d in mol_sample.groupby("alg"):
+        ax.scatter(d["QED"], d["LogP"], d["SA"], color=d["pareto"], label=alg)
     ax.set_xlabel("QED", fontweight="bold")
     ax.set_ylabel("LogP", fontweight="bold")
     ax.set_zlabel("SA", fontweight="bold")
-    plt.legend(["Initial Pop", "NSGA2", "NSGA3"])
+    plt.legend()
     plt.title(f"MOP Result for different Algorithms")
 
-    ax.view_init(elev=10.0, azim=-20.0)
+    ax.view_init(elev=14.0, azim=55.0)
 
     imgdata_p = io.BytesIO()
     fig.savefig(imgdata_p, format="JPEG")
 
+    delta, num_p = r_plot_data(num_iter)
+
     # II. Running
     r_data = []
+    r_alg = []
     for res in results:
         running = RunningMetricAnimation(
-            delta_gen=10, n_plots=3, key_press=False, do_show=False
+            delta_gen=delta, n_plots=num_p, key_press=False, do_show=False
         )
-        for algorithm in res.history[:30]:
+        for algorithm in res.history[:num_iter]:
             running.update(algorithm)
         r_data.append(running.data[-1:])
+        r_alg.append(res.algorithm.__class__.__name__)
 
     fig, ax = plt.subplots()
     fig.set_size_inches(12, 6.5)
-    for d in r_data:
-        running.draw(d, ax)
+    for d, alg in zip(r_data, r_alg):
+        temp = list(d[0])
+        temp[0] = alg
+        d = [tuple(temp)]
+        running.draw_comp(d, ax)
     imgdata_r = io.BytesIO()
     fig.savefig(imgdata_r, format="JPEG")
 
     return imgdata_p, imgdata_r
+
+
+def r_plot_data(num_iter):
+    delta, num_p = 0, 0
+
+    if num_iter < 10:
+        delta = num_iter
+        num_p = 1
+    elif num_iter <= 50:
+        delta = 10
+        num_p = num_iter / 10
+    else:
+        delta = num_iter / 5
+        num_p = 5
+    return delta, num_p
 
 
 class ResultWriter:
@@ -228,7 +249,7 @@ class ResultWriter:
         self.comp = ()
         self.filename = filename
         # result data setup
-        for res in results:
+        for res, s in zip(results, sets):
             cur = []
             # store alg name
             cur.append(res.algorithm.__class__.__name__ + " Data")
@@ -236,14 +257,14 @@ class ResultWriter:
             topN = res.X[np.argsort(res.F[:, 0])][:10]
             cur.append(topN)
             # alg settings
-            cur.append(sets)
+            cur.append(s)
             # pareto plot
             cur.append(pareto_plot(molecules, res))
             # running metric plots
-            cur.append(running_plots(res))
+            cur.append(running_plots(res, s[3][1]))
             self.data.append(cur)
         if len(results) > 1:
-            self.comp = compare_data(molecules, results)
+            self.comp = compare_data(molecules, results, s[3][1])
 
     def store_data(self):
         workbook = xlsxwriter.Workbook(self.filename)
@@ -342,7 +363,7 @@ class ResultWriter:
                 "y_scale": 202 / image.height,
                 "object_position": 1,
             }
-            worksheet.insert_image("A20", "", {"image_data": self.comp[1], **d})
+            worksheet.insert_image("K1", "", {"image_data": self.comp[1], **d})
 
         workbook.close()
 

@@ -39,7 +39,7 @@ from pymoo.visualization.scatter import Scatter
 alphabet = sf.get_semantic_robust_alphabet()
 
 SEED = 1
-NUM_ITERATIONS = 30
+NUM_ITERATIONS = 100
 POP_SIZE = 100
 
 # TODO Does not work might need to be implemented as constraint
@@ -276,23 +276,26 @@ def main() -> None:
     print("")
 
     # * III. Run Algorithms
-
-    results = []
-
-    for alg_n, alg in zip(algs, algorithms):
-        results.append(run_alg(molecules, alg, alg_n))
-
     # * IV. Store Results
 
-    sets = [
-        ("Data", data),
-        ("Seed", SEED),
-        ("Pop_size", POP_SIZE),
-        ("N_Gen", NUM_ITERATIONS),
-        ("Sampling", "Random uniform"),
-        ("Crossover", "1-point, 100%"),
-        ("Mutation", "Random replace, 40%"),
-    ]
+    results = []
+    sets = []
+
+    for alg_n, alg in zip(algs, algorithms):
+        r = run_alg(molecules, alg, alg_n)
+        results.append(r)
+        sets.append(
+            [
+                ("Data", data),
+                ("Seed", SEED),
+                ("Pop_size", alg.pop_size),
+                ("N_Gen", NUM_ITERATIONS),
+                ("Sampling", "Random uniform"),
+                ("Crossover", "1-point, 100%"),
+                ("Mutation", "Random replace, 40%"),
+                ("Pareto Members", len(r.F[:, 0])),
+            ]
+        )
 
     rw = ResultWriter(molecules, results, sets, "test.xlsx")
 
