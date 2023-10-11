@@ -11,9 +11,17 @@
 # Built Visual Studio Code Extensions
 *.vsix
 
-fragments/
+# SMILES Data folders
+Fragments/
 Drug-like/
-pkl/
+
+# Excel output
 test.xlsx
+
+# Molecule images
 mol.png
 mol*.png
+
+# pkl files
+pkl/*
+!pkl/1%-fragments-indicators-lfs.pkl

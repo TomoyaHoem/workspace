@@ -88,7 +88,7 @@ def main() -> None:
     print(molecules.head())
 
     # pickle dataframe
-    molecules.to_pickle("./pkl/1%-fragments.pkl")
+    molecules.to_pickle("./pkl/1%-fragments-lfs.pkl")
     print("--- Finished Pickling ---")
 
 

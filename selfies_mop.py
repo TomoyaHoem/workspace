@@ -258,7 +258,7 @@ def main() -> None:
     data = sys.argv[1]
     if data == "fragments":
         # unpickle
-        molecules = pd.read_pickle("./pkl/1%-fragments-indicators.pkl")
+        molecules = pd.read_pickle("./pkl/1%-fragments-indicators-lfs.pkl")
 
         # add a column to separate pareto front
         molecules["pareto"] = "#9C95994C"
