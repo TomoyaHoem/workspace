@@ -159,7 +159,7 @@ try:
     else:
         from Cython.Build import cythonize
 
-        ext = cythonize(".venv_lx/lib/python3.11/size-packages/pymoo/cython/*.pyx")
+        ext = cythonize(".venv_lx/lib/python3.11/site-packages/pymoo/cython/*.pyx")
 
     if not args.nolibs:
 

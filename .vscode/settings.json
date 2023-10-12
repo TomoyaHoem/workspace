@@ -1,5 +1,6 @@
 {
     "python.formatting.provider": "none",
+    "python.terminal.activateEnvironment": true,
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter"
     }
