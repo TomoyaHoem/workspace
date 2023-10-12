@@ -16,7 +16,7 @@ Fragments/
 Drug-Like/
 
 # Excel output
-test.xlsx
+*.xlsx
 
 # Molecule images
 mol.png
