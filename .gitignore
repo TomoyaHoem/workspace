@@ -13,7 +13,7 @@
 
 # SMILES Data folders
 Fragments/
-Drug-like/
+Drug-Like/
 
 # Excel output
 test.xlsx
