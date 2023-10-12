@@ -96,7 +96,7 @@ def pareto_plot(molecules: pd.DataFrame, res: list, plot=False) -> Image:
         mol_sample["QED"],
         mol_sample["LogP"],
         mol_sample["SA"],
-        color=mol_sample["pareto"],
+        color=mol_sample["pareto"].tolist(),
     )
     ax.set_xlabel("QED", fontweight="bold")
     ax.set_ylabel("LogP", fontweight="bold")
@@ -185,7 +185,7 @@ def compare_data(molecules: pd.DataFrame, results: list, num_iter, plot=False):
 
     # Creating plot
     for alg, d in mol_sample.groupby("alg"):
-        ax.scatter(d["QED"], d["LogP"], d["SA"], color=d["pareto"], label=alg)
+        ax.scatter(d["QED"], d["LogP"], d["SA"], color=d["pareto"].tolist(), label=alg)
     ax.set_xlabel("QED", fontweight="bold")
     ax.set_ylabel("LogP", fontweight="bold")
     ax.set_zlabel("SA", fontweight="bold")
