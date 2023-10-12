@@ -303,7 +303,7 @@ def main() -> None:
             ]
         )
 
-    rw = ResultWriter(molecules, results, sets, "test.xlsx")
+    rw = ResultWriter(molecules, results, sets, "server_test.xlsx")
 
     last_arg = sys.argv[-1]
 
