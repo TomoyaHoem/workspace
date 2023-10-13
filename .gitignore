@@ -25,3 +25,6 @@ mol*.png
 # pkl files
 pkl/*
 !pkl/*lfs.pkl
+
+# playground
+playground.py
