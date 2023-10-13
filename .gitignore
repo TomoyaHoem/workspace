@@ -24,4 +24,4 @@ mol*.png
 
 # pkl files
 pkl/*
-!pkl/1%-fragments-indicators-lfs.pkl
+!pkl/*lfs.pkl

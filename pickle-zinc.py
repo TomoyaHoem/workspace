@@ -6,8 +6,8 @@ from rdkit.Chem import PandasTools
 import selfies as sf
 from alive_progress import alive_bar
 
-TOTAL_NUM_MOLS = 15_000_000
-MOL_PERCENTAGE_PER_FILE = 0.01
+TOTAL_NUM_MOLS = 870_000_000
+MOL_PERCENTAGE_PER_FILE = 0.0002
 
 
 def SetDTypes(df):
@@ -41,7 +41,7 @@ def ReadMolsWithLimit(cwd) -> pd.DataFrame:
             for file in files:
                 index = 0
                 # print(f"Storing {file}")
-                curP = root + "\\" + file
+                curP = os.path.join(root, file)
                 suppl = Chem.SmilesMolSupplier(curP)
                 num_lines = sum(1 for _ in open(curP))
                 # if num_lines == 0:
@@ -72,7 +72,7 @@ def main() -> None:
     print(f"--- Reading ZINC data ---")
 
     # read data from files into dataframe
-    cwd = os.path.join(os.getcwd(), "Fragments")
+    cwd = os.path.join(os.getcwd(), "Drug-Like")
     # current index to store in dataframe
     molecules = ReadMolsWithLimit(cwd)
 
@@ -88,7 +88,7 @@ def main() -> None:
     print(molecules.head())
 
     # pickle dataframe
-    molecules.to_pickle("./pkl/1%-fragments-lfs.pkl")
+    molecules.to_pickle("./pkl/1%-druglike-lfs.pkl")
     print("--- Finished Pickling ---")
 
 
