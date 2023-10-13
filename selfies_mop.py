@@ -39,7 +39,7 @@ from pymoo.visualization.scatter import Scatter
 alphabet = sf.get_semantic_robust_alphabet()
 
 SEED = 1
-NUM_ITERATIONS = 100
+NUM_ITERATIONS = 3
 POP_SIZE = 100
 
 # TODO Does not work might need to be implemented as constraint

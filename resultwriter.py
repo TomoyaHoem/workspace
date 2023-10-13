@@ -197,12 +197,15 @@ def compare_data(molecules: pd.DataFrame, results: list, num_iter, plot=False):
     if plot:
         plt.show()
 
-    imgdata_p = io.BytesIO()
-    fig.savefig(imgdata_p, format="JPEG")
+    imgdata_p_1 = io.BytesIO()
+    fig.savefig(imgdata_p_1, format="JPEG")
 
-    delta, num_p = r_plot_data(num_iter)
+    ax.view_init(elev=10.0, azim=-20.0)
+    imgdata_p_2 = io.BytesIO()
+    fig.savefig(imgdata_p_2, format="JPEG")
 
     # II. Running
+    delta, num_p = r_plot_data(num_iter)
     r_data = []
     r_alg = []
     for res in results:
@@ -224,7 +227,7 @@ def compare_data(molecules: pd.DataFrame, results: list, num_iter, plot=False):
     imgdata_r = io.BytesIO()
     fig.savefig(imgdata_r, format="JPEG")
 
-    return imgdata_p, imgdata_r
+    return imgdata_p_1, imgdata_p_2, imgdata_r
 
 
 def r_plot_data(num_iter):
@@ -380,20 +383,34 @@ class ResultWriter:
 
         if self.comp:
             worksheet = workbook.add_worksheet("Comparison")
-            # I. Pareto comparison
+            # I. Pareto comparison a)
             d = {
                 "x_scale": 200 / image.width,
                 "y_scale": 202 / image.height,
                 "object_position": 1,
             }
-            worksheet.insert_image("A1", "", {"image_data": self.comp[0], **d})
+            worksheet.insert_image("B2", "", {"image_data": self.comp[0], **d})
+            # I. Pareto comparison b)
+            d = {
+                "x_scale": 200 / image.width,
+                "y_scale": 202 / image.height,
+                "object_position": 1,
+            }
+            worksheet.insert_image("B23", "", {"image_data": self.comp[1], **d})
             # II. Running Metric comparison
             d = {
                 "x_scale": 200 / image.width,
                 "y_scale": 202 / image.height,
                 "object_position": 1,
             }
-            worksheet.insert_image("K1", "", {"image_data": self.comp[1], **d})
+            worksheet.insert_image("M21", "", {"image_data": self.comp[2], **d})
+            worksheet.conditional_format(
+                "A1:Y44",
+                {
+                    "type": "blanks",
+                    "format": formats["filler"],
+                },
+            )
 
         workbook.close()
 
