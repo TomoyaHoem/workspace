@@ -91,7 +91,7 @@ class SEFLIESSampling(Sampling):
         X = np.full((n_samples, 1), None, dtype=object)
 
         np.random.seed(SEED)
-        sample = np.random.choice(problem.SELFIES, size=n_samples)
+        sample = np.random.choice(problem.SELFIES, size=n_samples, replace=False)
 
         for i in range(n_samples):
             X[i, 0] = sample[i]
@@ -222,7 +222,7 @@ def main() -> None:
             )
         elif alg == "nsga3":
             # create the reference directions to be used for the optimization
-            ref_dirs = get_reference_directions("das-dennis", 3, n_partitions=15)
+            ref_dirs = get_reference_directions("energy", 3, POP_SIZE)
             # run pymoo nsga3
             algorithm = NSGA3(
                 ref_dirs=ref_dirs,
@@ -232,7 +232,7 @@ def main() -> None:
                 eliminate_duplicates=SELFIESDuplicateElimination(),
             )
         elif alg == "moead":
-            ref_dirs = get_reference_directions("uniform", 3, n_partitions=15)
+            ref_dirs = get_reference_directions("energy", 3, POP_SIZE)
             # run pymoo moead
             algorithm = MOEAD(
                 ref_dirs=ref_dirs,
@@ -263,8 +263,11 @@ def main() -> None:
         # add a column to separate pareto front
         molecules["pareto"] = "#9C95994C"
     elif data == "druglike":
-        # TODO add druglike data
-        return
+        # unpickle
+        molecules = pd.read_pickle("./pkl/1%-druglike-indicators-lfs.pkl")
+
+        # add a column to separate pareto front
+        molecules["pareto"] = "#9C95994C"
     else:
         print("ERROR: invalid data name")
         return
@@ -303,7 +306,7 @@ def main() -> None:
             ]
         )
 
-    rw = ResultWriter(molecules, results, sets, "server_test.xlsx")
+    rw = ResultWriter(molecules, results, sets, "init_test.xlsx")
 
     last_arg = sys.argv[-1]
 

@@ -1,6 +1,7 @@
 import xlsxwriter
 import io
 import os
+import random
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -248,14 +249,17 @@ class ResultWriter:
         self.data = []
         self.comp = ()
         self.filename = filename
+        initial = self.initial_pop_sample(molecules, results)
         # result data setup
         for res, s in zip(results, sets):
             cur = []
             # store alg name
             cur.append(res.algorithm.__class__.__name__ + " Data")
-            # store top n individuals
-            topN = res.X[np.argsort(res.F[:, 0])][:100]
-            cur.append(topN)
+            # store initial and top n individuals
+            top = res.X[np.argsort(res.F[:, 0])].tolist()
+            n = len(top) if len(top) < 100 else 100
+            topN = random.sample(top, n)
+            cur.append([initial, topN])
             # alg settings
             cur.append(s)
             # pareto plot
@@ -266,6 +270,13 @@ class ResultWriter:
         if len(results) > 1:
             self.comp = compare_data(molecules, results, s[3][1])
 
+    def initial_pop_sample(self, molecules, res):
+        initial_population = [x.X[0] for x in res[0].history[0].pop]
+        mol_sample = molecules.loc[molecules["SELFIES"].isin(initial_population)]
+        initial = np.random.choice(mol_sample["SELFIES"], size=100, replace=False)
+        init = [[x] for x in initial]
+        return init
+
     def store_data(self):
         workbook = xlsxwriter.Workbook(self.filename)
         formats = get_format_dict(workbook)
@@ -274,12 +285,13 @@ class ResultWriter:
             worksheet = workbook.add_worksheet(data[0])
 
             # I. Title
-            worksheet.merge_range("B1:F1", data[0].upper(), formats["title"])
+            worksheet.merge_range("A1:E1", data[0].upper(), formats["title"])
 
-            # II. Top members
+            # II. Initial vs Top members
             last = 0
-            worksheet.merge_range("B2:F2", "TOP INDIVIDUALS", formats["header"])
-            for row, mol in enumerate(data[1]):
+            # Initial
+            worksheet.merge_range("B2:F2", "INITIAL", formats["header"])
+            for row, mol in enumerate(data[1][0]):
                 row *= 10
                 row += 2
                 last = row
@@ -296,52 +308,70 @@ class ResultWriter:
                 }
                 worksheet.merge_range(row, 3, row + 9, 5, ".", formats["img"])
                 worksheet.insert_image(row, 3, "", {"image_data": image_buffer, **d})
+            # Top
+            worksheet.merge_range("G2:K2", "TOP INDIVIDUALS", formats["header"])
+            for row, mol in enumerate(data[1][1]):
+                row *= 10
+                row += 2
+                worksheet.merge_range(row, 6, row + 9, 7, mol[0], formats["selfies"])
+
+                # Add images
+                img = Draw.MolToImage(Chem.MolFromSmiles(sf.decoder(mol[0])))
+                image_buffer, image = resize(img, (300, 300), format="JPEG")
+
+                d = {
+                    "x_scale": 192 / image.width,
+                    "y_scale": 200 / image.height,
+                    "object_position": 1,
+                }
+                worksheet.merge_range(row, 8, row + 9, 10, ".", formats["img"])
+                worksheet.insert_image(row, 8, "", {"image_data": image_buffer, **d})
 
             # III. Settings
-            worksheet.merge_range("H2:K2", "SETTINGS", formats["header"])
+            worksheet.merge_range("M2:P2", "SETTINGS", formats["header"])
             for row, s in enumerate(data[2]):
                 row *= 2
                 row += 2
-                worksheet.merge_range(row, 7, row + 1, 8, s[0], formats["set"])
-                worksheet.merge_range(row, 9, row + 1, 10, s[1], formats["set"])
+                worksheet.merge_range(row, 12, row + 1, 13, s[0], formats["set"])
+                worksheet.merge_range(row, 14, row + 1, 15, s[1], formats["set"])
 
             # IV. Pareto
-            worksheet.merge_range("M2:V2", "PARETO FRONT", formats["header"])
+            worksheet.merge_range("R2:AA2", "PARETO FRONT", formats["header"])
             # Add pareto image
             d = {
                 "x_scale": 200 / image.width,
                 "y_scale": 200 / image.height,
                 "object_position": 1,
             }
-            worksheet.merge_range("M3:V21", ".", formats["img"])
-            worksheet.insert_image("M3", "", {"image_data": data[3], **d})
+            worksheet.merge_range("R3:AA21", ".", formats["img"])
+            worksheet.insert_image("R3", "", {"image_data": data[3], **d})
 
             # V. Running Metric
             # a)
-            worksheet.merge_range("H25:S25", "R-METRIC ALL", formats["header"])
-            worksheet.merge_range("H26:S46", ".", formats["img"])
+            worksheet.merge_range("M25:X25", "R-METRIC ALL", formats["header"])
+            worksheet.merge_range("M26:X46", ".", formats["img"])
             # Add running all
             d = {
                 "x_scale": 200 / image.width,
                 "y_scale": 202 / image.height,
                 "object_position": 1,
             }
-            worksheet.insert_image("H26", "", {"image_data": data[4][0], **d})
+            worksheet.insert_image("M26", "", {"image_data": data[4][0], **d})
             # b)
-            worksheet.merge_range("H50:S50", "R-METRIC LAST", formats["header"])
-            worksheet.merge_range("H51:S71", ".", formats["img"])
+            worksheet.merge_range("M50:X50", "R-METRIC LAST", formats["header"])
+            worksheet.merge_range("M51:X71", ".", formats["img"])
             # Add running last
             d = {
                 "x_scale": 200 / image.width,
                 "y_scale": 202 / image.height,
                 "object_position": 1,
             }
-            worksheet.insert_image("H51", "", {"image_data": data[4][1], **d})
+            worksheet.insert_image("M51", "", {"image_data": data[4][1], **d})
 
             # VI. Filler
             last += 11
             worksheet.conditional_format(
-                "A1:W" + str(last),
+                "A1:AB" + str(last),
                 {
                     "type": "blanks",
                     "format": formats["filler"],
