@@ -53,6 +53,13 @@ def get_format_dict(workbook: xlsxwriter.workbook) -> dict:
     set_cell_format.set_text_wrap()
     set_cell_format.set_align("left")
 
+    # fit
+    fit_cell_format = workbook.add_format()
+    fit_cell_format.set_bold()
+    fit_cell_format.set_italic()
+    fit_cell_format.set_align("center")
+    fit_cell_format.set_align("vcenter")
+
     formats = {
         "filler": filler_cell_format,
         "title": title_cell_format,
@@ -60,6 +67,7 @@ def get_format_dict(workbook: xlsxwriter.workbook) -> dict:
         "img": img_cell_format,
         "header": header_cell_format,
         "set": set_cell_format,
+        "fit": fit_cell_format,
     }
     return formats
 
@@ -227,7 +235,7 @@ def compare_data(molecules: pd.DataFrame, results: list, num_iter, plot=False):
     imgdata_r = io.BytesIO()
     fig.savefig(imgdata_r, format="JPEG")
 
-    return imgdata_p_1, imgdata_p_2, imgdata_r
+    return [imgdata_p_1, imgdata_p_2, imgdata_r]
 
 
 def r_plot_data(num_iter):
@@ -245,12 +253,26 @@ def r_plot_data(num_iter):
     return delta, num_p
 
 
+def calc_fitness_vals(fit: list):
+    qed = [i[0] for i in fit]
+    logp = [i[1] for i in fit]
+    sa = [i[2] for i in fit]
+    res = np.array(
+        [
+            [np.min(qed), np.max(qed), np.mean(qed)],
+            [np.min(logp), np.max(logp), np.mean(logp)],
+            [np.min(sa), np.max(sa), np.mean(sa)],
+        ]
+    )
+    return np.round(res, 2)
+
+
 class ResultWriter:
     def __init__(
         self, molecules: pd.DataFrame, results: list, sets: list, filename: str
     ) -> None:
         self.data = []
-        self.comp = ()
+        self.comp = []
         self.filename = filename
         initial = self.initial_pop_sample(molecules, results)
         # result data setup
@@ -272,6 +294,11 @@ class ResultWriter:
             self.data.append(cur)
         if len(results) > 1:
             self.comp = compare_data(molecules, results, s[3][1])
+            self.comp.append([])
+            self.comp.append([])
+            for res in results:
+                self.comp[3].append(res.algorithm.__class__.__name__)
+                self.comp[4].append(calc_fitness_vals(res.F))
 
     def initial_pop_sample(self, molecules, res):
         initial_population = [x.X[0] for x in res[0].history[0].pop]
@@ -397,6 +424,7 @@ class ResultWriter:
                 "object_position": 1,
             }
             worksheet.insert_image("B23", "", {"image_data": self.comp[1], **d})
+
             # II. Running Metric comparison
             d = {
                 "x_scale": 200 / image.width,
@@ -411,6 +439,24 @@ class ResultWriter:
                     "format": formats["filler"],
                 },
             )
+
+            # III. Pareto Values
+            worksheet.merge_range("M2:S2", "FITNESS", formats["header"])
+            worksheet.merge_range("M3:M4", "Objectives", formats["fit"])
+            worksheet.write("M5", "QED")
+            worksheet.write("M6", "LogP")
+            worksheet.write("M7", "SA")
+            for i in range(2):
+                worksheet.merge_range(
+                    2, 13 + (i * 3), 2, 15 + (i * 3), self.comp[3][i], formats["fit"]
+                )
+                worksheet.write(3, 13 + (i * 3), "MIN")
+                worksheet.write(3, 14 + (i * 3), "MAX")
+                worksheet.write(3, 15 + (i * 3), "AVG")
+                for j in range(3):
+                    worksheet.write(4, 13 + (i * 3) + j, self.comp[4][i][0][j])
+                    worksheet.write(5, 13 + (i * 3) + j, self.comp[4][i][1][j])
+                    worksheet.write(6, 13 + (i * 3) + j, self.comp[4][i][2][j])
 
         workbook.close()
 
