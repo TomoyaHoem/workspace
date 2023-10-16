@@ -452,9 +452,9 @@ class ResultWriter:
                 worksheet.merge_range(
                     2, 13 + (i * 3), 2, 15 + (i * 3), self.comp[3][i], formats["fit"]
                 )
-                worksheet.write(3, 13 + (i * 3), "MIN")
-                worksheet.write(3, 14 + (i * 3), "MAX")
-                worksheet.write(3, 15 + (i * 3), "AVG")
+                worksheet.write(3, 13 + (i * 3), "MIN", formats["fit"])
+                worksheet.write(3, 14 + (i * 3), "MAX", formats["fit"])
+                worksheet.write(3, 15 + (i * 3), "AVG", formats["fit"])
                 for j in range(3):
                     worksheet.write(4, 13 + (i * 3) + j, self.comp[4][i][0][j])
                     worksheet.write(5, 13 + (i * 3) + j, self.comp[4][i][1][j])
