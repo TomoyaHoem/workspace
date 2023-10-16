@@ -191,22 +191,25 @@ def print_help():
     print("")
 
 
-def main() -> None:
-    print("Pymoo MOP using SELFIES")
+def main(args: list, mols: pd.DataFrame) -> None:
     print("Passed args: ", end=" ")
-    print(*sys.argv[1:])
-    print("# " * 10)
+    print(*args)
+    print(f"Popsize: {POP_SIZE}, Iterations: {NUM_ITERATIONS}")
     print("")
+
+    molecules = mols
 
     # * I. Parse algorithms
 
     print("Parsing Algorithms...")
 
-    if len(sys.argv) < 3:
-        print("ERROR: invalid number of arguments please provide <Data Alg1 Alg2>.")
+    if len(args) < 5:
+        print(
+            "ERROR: invalid number of arguments please provide <Data Alg1 Alg2 Filename Options>."
+        )
         return
 
-    algs = sys.argv[2:-1]
+    algs = args[1:3]
     algorithms = []
 
     for alg in algs:
@@ -247,15 +250,74 @@ def main() -> None:
             return
         algorithms.append(algorithm)
 
-    # * II. Parse data
+    # * II. Run Algorithms
 
+    results = []
+    sets = []
+
+    for alg_n, alg in zip(algs, algorithms):
+        r = run_alg(molecules, alg, alg_n)
+
+        # maximize objectives
+        for obj_vals in r.F:
+            obj_vals[0] *= -1
+            obj_vals[1] *= -1
+
+        results.append(r)
+        sets.append(
+            [
+                ("Data", args[0]),
+                ("Seed", SEED),
+                ("Pop_size", alg.pop_size),
+                ("N_Gen", NUM_ITERATIONS),
+                ("Sampling", "Random uniform"),
+                ("Crossover", "1-point, 100%"),
+                ("Mutation", "Random replace, 40%"),
+                ("Pareto Members", len(r.F[:, 0])),
+            ]
+        )
+
+    # * III. Store Results
+
+    rw = ResultWriter(molecules, results, sets, args[3])
+
+    last_arg = args[-1]
+
+    if last_arg == "-s" or last_arg == "-sp" or last_arg == "-ps":
+        print("Storing Results...")
+        rw.store_data()
+
+    # * IV. Print Results
+
+    if last_arg == "-p" or last_arg == "-sp" or last_arg == "-ps":
+        print("Printing Results...")
+        rw.print_data(molecules, results, NUM_ITERATIONS)
+
+
+def run_alg(molecules, algorithm, alg: str):
+    print(f"Running {alg.upper()}...")
+    res = minimize(
+        SELFIESProblem(selfies=molecules["SELFIES"].to_numpy()),
+        algorithm,
+        ("n_gen", NUM_ITERATIONS),
+        seed=SEED,
+        save_history=True,
+        verbose=True,
+    )
+
+    print(f"Finished {alg.upper()}")
     print("")
-    print("Reading Data...")
+
+    return res
+
+
+def read_data(data: str):
+    # * II. Parse data
+    print(f"Reading *{data}* Data...")
 
     # load data
     start = time.time()
 
-    data = sys.argv[1]
     if data == "fragments":
         # unpickle
         molecules = pd.read_pickle("./pkl/1%-fragments-indicators-lfs.pkl")
@@ -278,68 +340,59 @@ def main() -> None:
     print(molecules.head())
     print("")
 
-    # * III. Run Algorithms
-    # * IV. Store Results
-
-    results = []
-    sets = []
-
-    for alg_n, alg in zip(algs, algorithms):
-        r = run_alg(molecules, alg, alg_n)
-
-        # maximize objectives
-        for obj_vals in r.F:
-            obj_vals[0] *= -1
-            obj_vals[1] *= -1
-
-        results.append(r)
-        sets.append(
-            [
-                ("Data", data),
-                ("Seed", SEED),
-                ("Pop_size", alg.pop_size),
-                ("N_Gen", NUM_ITERATIONS),
-                ("Sampling", "Random uniform"),
-                ("Crossover", "1-point, 100%"),
-                ("Mutation", "Random replace, 40%"),
-                ("Pareto Members", len(r.F[:, 0])),
-            ]
-        )
-
-    rw = ResultWriter(molecules, results, sets, "init_test.xlsx")
-
-    last_arg = sys.argv[-1]
-
-    if last_arg == "-s" or last_arg == "-sp" or last_arg == "-ps":
-        print("Storing Results...")
-        rw.store_data()
-
-    # * V. Print Results
-
-    if last_arg == "-p" or last_arg == "-sp" or last_arg == "-ps":
-        print("Printing Results...")
-        rw.print_data(molecules, results, NUM_ITERATIONS)
-
-    print("# " * 10)
-    print("Finished Execution")
-
-
-def run_alg(molecules, algorithm, alg: str):
-    print(f"Running {alg.upper()}...")
-    res = minimize(
-        SELFIESProblem(selfies=molecules["SELFIES"].to_numpy()),
-        algorithm,
-        ("n_gen", NUM_ITERATIONS),
-        seed=SEED,
-        save_history=True,
-        verbose=True,
-    )
-
-    print(f"Finished {alg.upper()}")
-    print("")
-
-    return res
+    return molecules
 
 
 if __name__ == "__main__":
-    main()
+    """
+    Datasets: fragments or druglike
+    Algorithms: NSGA2, NSGA3, MOEAD
+    Store/Print options: -p, -s or -ps / -sp
+    """
+    # Entry
+    print("Pymoo MOP using SELFIES")
+    print("# " * 10)
+    print("")
+    # Settings
+    pop_sizes = [50, 100, 250, 500, 1000]
+    alg1 = "nsga2"
+    alg2 = "nsga3"
+    store_print = ""
+    # Read Data
+    d_sets = ["fragments", "druglike"]
+    fragment_mols = read_data(d_sets[0])
+    druglike_mols = read_data(d_sets[1])
+    mol_sets = [fragment_mols, druglike_mols]
+    # Run
+    r_count = 0
+    print("Starting runs...")
+    print("-" * 25)
+    print("")
+    for i in range(3):
+        for d, n in zip(mol_sets, d_sets):
+            for p in pop_sizes:
+                POP_SIZE = p
+                filename = (
+                    "MOP_Experiment_"
+                    + str(r_count)
+                    + "_"
+                    + n
+                    + "_"
+                    + alg1
+                    + "_"
+                    + alg2
+                    + "_"
+                    + str(NUM_ITERATIONS)
+                    + "_"
+                    + str(POP_SIZE)
+                    + ".xlsx"
+                )
+                r_count += 1
+                main([n, alg1, alg2, filename, store_print], d)
+                print(f"Finished run {r_count}")
+                print("-" * 25)
+                print("")
+
+    print("")
+    print("# " * 10)
+    print("Finished Execution")

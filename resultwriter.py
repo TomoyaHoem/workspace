@@ -303,12 +303,14 @@ class ResultWriter:
     def initial_pop_sample(self, molecules, res):
         initial_population = [x.X[0] for x in res[0].history[0].pop]
         mol_sample = molecules.loc[molecules["SELFIES"].isin(initial_population)]
-        initial = np.random.choice(mol_sample["SELFIES"], size=100, replace=False)
+        size = len(mol_sample) if len(mol_sample) < 100 else 100
+        initial = np.random.choice(mol_sample["SELFIES"], size=size, replace=False)
         init = [[x] for x in initial]
         return init
 
     def store_data(self):
-        workbook = xlsxwriter.Workbook(self.filename)
+        path = os.path.join("ResultWriter", self.filename)
+        workbook = xlsxwriter.Workbook(path)
         formats = get_format_dict(workbook)
 
         for data in self.data:

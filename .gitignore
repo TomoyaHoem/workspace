@@ -22,7 +22,7 @@ Drug-Like/
 playground.py
 
 # Excel output
-*.xlsx
+ResultWriter/
 
 # Molecule images
 mol.png
