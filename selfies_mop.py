@@ -355,6 +355,7 @@ if __name__ == "__main__":
     pop_sizes = [50]  # , 100, 250, 500, 1000]
     algs = ["nsga2", "nsga3", "moead"]
     store_print = "-s"
+    repeat = 3
     # Read Data
     d_sets = ["fragments", "druglike"]
     fragment_mols = read_data(d_sets[0])
@@ -367,7 +368,7 @@ if __name__ == "__main__":
     print("")
     for d, n in zip(mol_sets, d_sets):
         for p in pop_sizes:
-            for i in range(3):
+            for i in range(repeat):
                 POP_SIZE = p
                 filename = (
                     "MOP_Experiment_"

@@ -450,12 +450,12 @@ class ResultWriter:
             )
 
             # III. Pareto Values
-            worksheet.merge_range("M2:S2", "FITNESS", formats["header"])
+            worksheet.merge_range("M2:V2", "FITNESS", formats["header"])
             worksheet.merge_range("M3:M4", "Objectives", formats["fit"])
             worksheet.write("M5", "QED")
             worksheet.write("M6", "LogP")
             worksheet.write("M7", "SA")
-            for i in range(2):
+            for i in range(3):
                 worksheet.merge_range(
                     2, 13 + (i * 3), 2, 15 + (i * 3), self.comp[3][i], formats["fit"]
                 )
