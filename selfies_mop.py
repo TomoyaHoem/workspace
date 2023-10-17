@@ -368,9 +368,9 @@ if __name__ == "__main__":
     print("Starting runs...")
     print("-" * 25)
     print("")
-    for i in range(3):
-        for d, n in zip(mol_sets, d_sets):
-            for p in pop_sizes:
+    for d, n in zip(mol_sets, d_sets):
+        for p in pop_sizes:
+            for i in range(3):
                 POP_SIZE = p
                 filename = (
                     "MOP_Experiment_"
