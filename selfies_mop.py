@@ -39,7 +39,7 @@ from pymoo.visualization.scatter import Scatter
 alphabet = sf.get_semantic_robust_alphabet()
 
 SEED = 1
-NUM_ITERATIONS = 3
+NUM_ITERATIONS = 10
 POP_SIZE = 100
 
 # TODO Does not work might need to be implemented as constraint
@@ -279,7 +279,7 @@ def main(args: list, mols: pd.DataFrame) -> None:
 
     # * III. Store Results
 
-    rw = ResultWriter(molecules, results, sets, args[3])
+    rw = ResultWriter(molecules, results, sets, args[3], SEED)
 
     last_arg = args[-1]
 
@@ -300,9 +300,9 @@ def run_alg(molecules, algorithm, alg: str):
         SELFIESProblem(selfies=molecules["SELFIES"].to_numpy()),
         algorithm,
         ("n_gen", NUM_ITERATIONS),
-        seed=SEED,
+        #seed=SEED,
         save_history=True,
-        verbose=True,
+        verbose=False,
     )
 
     print(f"Finished {alg.upper()}")
@@ -354,10 +354,10 @@ if __name__ == "__main__":
     print("# " * 10)
     print("")
     # Settings
-    pop_sizes = [50, 100, 250, 500, 1000]
+    pop_sizes = [50]#, 100, 250, 500, 1000]
     alg1 = "nsga2"
     alg2 = "nsga3"
-    store_print = ""
+    store_print = "-s"
     # Read Data
     d_sets = ["fragments", "druglike"]
     fragment_mols = read_data(d_sets[0])

@@ -269,11 +269,12 @@ def calc_fitness_vals(fit: list):
 
 class ResultWriter:
     def __init__(
-        self, molecules: pd.DataFrame, results: list, sets: list, filename: str
+        self, molecules: pd.DataFrame, results: list, sets: list, filename: str, seed: int
     ) -> None:
         self.data = []
         self.comp = []
         self.filename = filename
+        self.seed = seed
         initial = self.initial_pop_sample(molecules, results)
         # result data setup
         for res, s in zip(results, sets):
@@ -304,6 +305,7 @@ class ResultWriter:
         initial_population = [x.X[0] for x in res[0].history[0].pop]
         mol_sample = molecules.loc[molecules["SELFIES"].isin(initial_population)]
         size = len(mol_sample) if len(mol_sample) < 100 else 100
+        np.random.seed(self.seed)
         initial = np.random.choice(mol_sample["SELFIES"], size=size, replace=False)
         init = [[x] for x in initial]
         return init
