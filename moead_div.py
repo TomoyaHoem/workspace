@@ -173,9 +173,9 @@ class MOEAD(LoopwiseAlgorithm, GeneticAlgorithm):
         # get the absolute index in F where offspring is better than the current F (decomposed space)
 
         I = np.where(off_FV < FV)[0]
-        # if I.any() and not_contains(pop, off):
-        #     pop[N[random.choice(I)]] = off
-        pop[N[I]] = off
+        if I.any() and not_contains(pop, off):
+            pop[N[random.choice(I)]] = off
+        # pop[N[I]] = off
 
 
 class ParallelMOEAD(MOEAD):

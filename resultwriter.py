@@ -164,7 +164,7 @@ def compare_data(molecules: pd.DataFrame, results: list, num_iter, plot=False):
     # I. Pareto
 
     initial_population = [x.X[0] for x in results[0].history[0].pop]
-    mol_sample = molecules.loc[molecules["SELFIES"].isin(initial_population)]
+    mol_sample = molecules.loc[molecules["SELFIES"].isin(initial_population)].copy()
     mol_sample["alg"] = "Initial Pop"
 
     for res, col in zip(results, colors):
@@ -269,7 +269,12 @@ def calc_fitness_vals(fit: list):
 
 class ResultWriter:
     def __init__(
-        self, molecules: pd.DataFrame, results: list, sets: list, filename: str, seed: int
+        self,
+        molecules: pd.DataFrame,
+        results: list,
+        sets: list,
+        filename: str,
+        seed: int,
     ) -> None:
         self.data = []
         self.comp = []
