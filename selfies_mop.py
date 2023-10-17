@@ -33,8 +33,6 @@ from pymoo.core.mutation import Mutation
 from pymoo.core.duplicate import ElementwiseDuplicateElimination
 from pymoo.util.ref_dirs import get_reference_directions
 
-from pymoo.visualization.scatter import Scatter
-
 
 alphabet = sf.get_semantic_robust_alphabet()
 
@@ -203,13 +201,13 @@ def main(args: list, mols: pd.DataFrame) -> None:
 
     print("Parsing Algorithms...")
 
-    if len(args) < 5:
+    if len(args) < 4:
         print(
-            "ERROR: invalid number of arguments please provide <Data Alg1 Alg2 Filename Options>."
+            "ERROR: invalid number of arguments please provide <Data [Algorithms] Filename Options>."
         )
         return
 
-    algs = args[1:3]
+    algs = args[1]
     algorithms = []
 
     for alg in algs:
@@ -279,7 +277,7 @@ def main(args: list, mols: pd.DataFrame) -> None:
 
     # * III. Store Results
 
-    rw = ResultWriter(molecules, results, sets, args[3], SEED)
+    rw = ResultWriter(molecules, results, sets, args[2], SEED)
 
     last_arg = args[-1]
 
@@ -355,8 +353,7 @@ if __name__ == "__main__":
     print("")
     # Settings
     pop_sizes = [50]  # , 100, 250, 500, 1000]
-    alg1 = "nsga2"
-    alg2 = "moead"
+    algs = ["nsga2", "nsga3", "moead"]
     store_print = "-s"
     # Read Data
     d_sets = ["fragments", "druglike"]
@@ -378,9 +375,7 @@ if __name__ == "__main__":
                     + "_"
                     + n
                     + "_"
-                    + alg1
-                    + "_"
-                    + alg2
+                    + "_".join(algs)
                     + "_"
                     + str(NUM_ITERATIONS)
                     + "_"
@@ -388,7 +383,7 @@ if __name__ == "__main__":
                     + ".xlsx"
                 )
                 r_count += 1
-                main([n, alg1, alg2, filename, store_print], d)
+                main([n, algs, filename, store_print], d)
                 print(f"Finished run {r_count}")
                 print("-" * 25)
                 print("")
