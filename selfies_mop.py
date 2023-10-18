@@ -5,6 +5,7 @@ import random
 
 from collections import Counter
 from resultwriter import ResultWriter
+from averagewriter import AverageWriter
 
 import pandas as pd
 import numpy as np
@@ -189,7 +190,7 @@ def print_help():
     print("")
 
 
-def main(args: list, mols: pd.DataFrame) -> None:
+def main(args: list, mols: pd.DataFrame, aw: AverageWriter) -> None:
     print("Passed args: ", end=" ")
     print(*args)
     print(f"Popsize: {POP_SIZE}, Iterations: {NUM_ITERATIONS}")
@@ -278,6 +279,7 @@ def main(args: list, mols: pd.DataFrame) -> None:
     # * III. Store Results
 
     rw = ResultWriter(molecules, results, sets, args[2], SEED)
+    aw.append_results(results)
 
     last_arg = args[-1]
 
@@ -368,6 +370,7 @@ if __name__ == "__main__":
     print("")
     for d, n in zip(mol_sets, d_sets):
         for p in pop_sizes:
+            aw = AverageWriter(algs)
             for i in range(repeat):
                 POP_SIZE = p
                 filename = (
@@ -384,10 +387,26 @@ if __name__ == "__main__":
                     + ".xlsx"
                 )
                 r_count += 1
-                main([n, algs, filename, store_print], d)
+                main([n, algs, filename, store_print], d, aw)
                 print(f"Finished run {r_count}")
                 print("-" * 25)
                 print("")
+            print("Storing Averages...")
+            aw.store_averages(
+                "MOP_Experiment_Averages_"
+                + repeat
+                + "_"
+                + n
+                + "_"
+                + "_".join(algs)
+                + "_"
+                + str(NUM_ITERATIONS)
+                + "_"
+                + str(POP_SIZE)
+                + ".xlsx",
+                n,
+            )
+            print("")
 
     print("")
     print("# " * 10)
