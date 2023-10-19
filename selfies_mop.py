@@ -364,7 +364,7 @@ if __name__ == "__main__":
     druglike_mols = read_data(d_sets[1])
     mol_sets = [fragment_mols, druglike_mols]
     # Run
-    r_count = 0
+    r_count, i_count = 0, 0
     print("Starting runs...")
     print("-" * 25)
     print("")
@@ -394,7 +394,9 @@ if __name__ == "__main__":
             print("Storing Averages...")
             aw.store_averages(
                 "MOP_Experiment_Averages_"
-                + repeat
+                + str(i_count)
+                + "_"
+                + str(repeat)
                 + "_"
                 + n
                 + "_"
@@ -404,8 +406,9 @@ if __name__ == "__main__":
                 + "_"
                 + str(POP_SIZE)
                 + ".xlsx",
-                n,
+                repeat,
             )
+            i_count += 1
             print("")
 
     print("")

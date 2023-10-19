@@ -55,28 +55,30 @@ class AlgData:
     def running_data(self):
         vals = [v[0][2] for v in self._running_data]
         min_data = [
-            self.alg_name,
+            self.alg_name + "_min",
             self._running_data[0][0][1],
             np.min(vals, axis=0),
             self._running_data[0][0][3],
         ]
         max_data = [
-            self.alg_name,
+            self.alg_name + "_max",
             self._running_data[0][0][1],
             np.max(vals, axis=0),
             self._running_data[0][0][3],
         ]
         avg_data = [
-            self.alg_name,
+            self.alg_name + "_avg",
             self._running_data[0][0][1],
             np.mean(vals, axis=0),
             self._running_data[0][0][3],
         ]
-        minimum = ["MIN", min_data]
-        maximum = ["MAX", max_data]
-        average = ["AVG", avg_data]
+        r_data = {
+            "MIN": min_data,
+            "MAX": max_data,
+            "AVG": avg_data,
+        }
 
-        return [minimum, maximum, average]
+        return r_data
 
     @running_data.setter
     def running_data(self, values: list):
