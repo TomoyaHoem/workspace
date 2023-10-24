@@ -75,6 +75,8 @@ class AverageWriter:
         delta, num_p = self.r_plot_data(len(results[0].history))
         for res in results:
             currData = self.data[res.algorithm.__class__.__name__.lower()]
+            #pareto_len
+            currData.pareto_len = len(res.F.tolist())
             # pareto
             currData.pareto = res.F.tolist()
             # objectives
@@ -199,7 +201,7 @@ class AverageWriter:
             c_N = normalize(c_F, c_ideal, c_nadir)
             # normalize all previous generations with respect to current ideal and nadir for each alg
             for j in range(len(data)):
-                N = [normalize(p["F"], c_ideal, c_nadir) for p in data[j].histories]
+                N = [normalize(p.opt.get("F"), c_ideal, c_nadir) for p in data[j].histories[i]]
                 # calculate IGD
                 delta_f = [IGD(c_N).do(N[k]) for k in range(len(N))]
                 # append
@@ -208,7 +210,7 @@ class AverageWriter:
         # plot min, max, avg of igd_vals
         fig, ax = plt.subplots()
         fig.set_size_inches(12, 6.5)
-        gens = len(data[0].histories[0])
+        gens = [g for g in range(1, len(data[0].histories[0])+1, 1)]
         for i in range(len(igd_vals)):
             # avg
             ax.plot(

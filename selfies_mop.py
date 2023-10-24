@@ -302,7 +302,7 @@ def run_alg(molecules, algorithm, alg: str):
         ("n_gen", NUM_ITERATIONS),
         # seed=SEED,
         save_history=True,
-        verbose=False,
+        verbose=True,
     )
 
     print(f"Finished {alg.upper()}")
