@@ -18,6 +18,15 @@ class AlgData:
         self._logp = [[], [], []]
         self._sa = [[], [], []]
         self._running_data = []
+        self._histories = []
+
+    @property
+    def histories(self):
+        return self._histories
+
+    @histories.setter
+    def histories(self, value):
+        self._histories.append(value)
 
     @property
     def pareto_len(self):

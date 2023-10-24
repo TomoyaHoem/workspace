@@ -81,6 +81,8 @@ class AverageWriter:
             self.append_objectives(res, currData)
             # running metrics
             self.append_running_data(delta, num_p, res, currData)
+            # history
+            currData.histories = res.history
 
     def append_running_data(self, delta, num_p, res, currData):
         running = RunningMetricAnimation(
@@ -176,9 +178,7 @@ class AverageWriter:
         data = list(self.data.values())
         igd_vals = [[], [], []]
 
-        iters = len(data[0].pareto)
-
-        for i in range(iters):
+        for i in range(len(data[0].pareto)):
             # merge pareto sets and remove duplicates
             merged = list(
                 itertools.chain(data[0].pareto[i], data[1].pareto[i], data[2].pareto[i])
@@ -199,7 +199,7 @@ class AverageWriter:
             c_N = normalize(c_F, c_ideal, c_nadir)
             # normalize all previous generations with respect to current ideal and nadir for each alg
             for j in range(len(data)):
-                N = [normalize(np.array(p), c_ideal, c_nadir) for p in data[j].pareto]
+                N = [normalize(p["F"], c_ideal, c_nadir) for p in data[j].histories]
                 # calculate IGD
                 delta_f = [IGD(c_N).do(N[k]) for k in range(len(N))]
                 # append
@@ -208,7 +208,7 @@ class AverageWriter:
         # plot min, max, avg of igd_vals
         fig, ax = plt.subplots()
         fig.set_size_inches(12, 6.5)
-        gens = [g for g in range(1, iters + 1, 1)]
+        gens = len(data[0].histories[0])
         for i in range(len(igd_vals)):
             # avg
             ax.plot(

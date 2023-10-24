@@ -38,7 +38,7 @@ from pymoo.util.ref_dirs import get_reference_directions
 alphabet = sf.get_semantic_robust_alphabet()
 
 SEED = 1
-NUM_ITERATIONS = 3
+NUM_ITERATIONS = 10
 POP_SIZE = 100
 
 # TODO Does not work might need to be implemented as constraint
