@@ -1,5 +1,6 @@
 import io
 import os
+import itertools
 import xlsxwriter
 import numpy as np
 from PIL import Image
@@ -7,6 +8,8 @@ from PIL import Image
 from algdata import AlgData
 import matplotlib.pyplot as plt
 from running_metric_ret import RunningMetricAnimation
+from pymoo.indicators.igd import IGD
+from pymoo.util.normalization import normalize
 
 colors = ["#FF0000", "#00FF0A", "#383FFF"]
 
@@ -73,7 +76,7 @@ class AverageWriter:
         for res in results:
             currData = self.data[res.algorithm.__class__.__name__.lower()]
             # pareto
-            currData.pareto = len(res.X[np.argsort(res.F[:, 0])].tolist())
+            currData.pareto = res.F.tolist()
             # objectives
             self.append_objectives(res, currData)
             # running metrics
@@ -146,6 +149,97 @@ class AverageWriter:
         fig.savefig(imgdata, format="JPEG")
         return imgdata
 
+    def dominates(self, a: list, b: list) -> bool:
+        dominate = False
+
+        # check QED
+        if b[0] > a[0]:
+            return False
+        if a[0] > b[0]:
+            dominate = True
+
+        # check LogP
+        if b[1] > a[1]:
+            return False
+        if a[1] > b[1]:
+            dominate = True
+
+        # check SA
+        if b[2] < a[2]:
+            return False
+        if a[2] < b[2]:
+            dominate = True
+
+        return dominate
+
+    def running_comparison_plot(self) -> Image:
+        data = list(self.data.values())
+        igd_vals = [[], [], []]
+
+        iters = len(data[0].pareto)
+
+        for i in range(iters):
+            # merge pareto sets and remove duplicates
+            merged = list(
+                itertools.chain(data[0].pareto[i], data[1].pareto[i], data[2].pareto[i])
+            )
+            merged.sort()
+            merged = list(m for m, _ in itertools.groupby(merged))
+            # remove non-dominated
+            for a, b in itertools.combinations(merged, 2):
+                # print(f"check if {a} dominates {b}")
+                if self.dominates(a, b):
+                    # print("true")
+                    merged.remove(b)
+            merged = np.array(merged)
+            # get ideal and nadir
+            c_F, c_ideal, c_nadir = merged, merged.min(axis=0), merged.max(axis=0)
+            # normalize
+            # normalize the current objective space values
+            c_N = normalize(c_F, c_ideal, c_nadir)
+            # normalize all previous generations with respect to current ideal and nadir for each alg
+            for j in range(len(data)):
+                N = [normalize(np.array(p), c_ideal, c_nadir) for p in data[j].pareto]
+                # calculate IGD
+                delta_f = [IGD(c_N).do(N[k]) for k in range(len(N))]
+                # append
+                igd_vals[j].append(delta_f)
+
+        # plot min, max, avg of igd_vals
+        fig, ax = plt.subplots()
+        fig.set_size_inches(12, 6.5)
+        gens = [g for g in range(1, iters + 1, 1)]
+        for i in range(len(igd_vals)):
+            # avg
+            ax.plot(
+                gens,
+                np.mean(igd_vals[i], axis=0),
+                label=data[i].alg_name,
+                alpha=0.9,
+                linewidth=3,
+                color=colors[i],
+            )
+            # min & max
+            f1 = np.min(igd_vals[i], axis=0)
+            f2 = np.max(igd_vals[i], axis=0)
+            ax.plot(
+                gens, f1, alpha=0.2, linestyle="dotted", linewidth=1, color=colors[i]
+            )
+            ax.plot(
+                gens, f2, alpha=0.2, linestyle="dashed", linewidth=1, color=colors[i]
+            )
+            # fill
+            plt.fill_between(gens, f1, f2, color=colors[i], alpha=0.1)
+
+        ax.legend()
+
+        ax.set_xlabel("Generation")
+        ax.set_ylabel("$\Theta$", rotation=0)
+        ax.yaxis.set_label_coords(-0.075, 0.5)
+        imgdata = io.BytesIO()
+        fig.savefig(imgdata, format="JPEG")
+        return imgdata
+
     def store_averages(self, filename, n) -> None:
         path = os.path.join("ResultWriter", filename)
         # for k, v in self.data.items():
@@ -182,7 +276,7 @@ class AverageWriter:
         # Number
         for i, (key, value) in enumerate(self.data.items()):
             worksheet.merge_range(
-                8, 2 + (i * 3), 9, 4 + (i * 3), value.pareto, formats["pareto"]
+                8, 2 + (i * 3), 9, 4 + (i * 3), value.pareto_len, formats["pareto"]
             )
         # III. Runnning
         worksheet.merge_range("B13:M13", "R-METRIC ALL", formats["header"])
@@ -194,9 +288,21 @@ class AverageWriter:
             "object_position": 1,
         }
         worksheet.insert_image("B14", "", {"image_data": self.running_plot(), **d})
+        # IV. Runnning Comp
+        worksheet.merge_range("B37:M37", "R-METRIC ALL COMPARISON", formats["header"])
+        worksheet.merge_range("B38:M38", ".", formats["img"])
+        # Add running all
+        d = {
+            "x_scale": 200 / 300,
+            "y_scale": 200 / 300,
+            "object_position": 1,
+        }
+        worksheet.insert_image(
+            "B38", "", {"image_data": self.running_comparison_plot(), **d}
+        )
         # filler
         worksheet.conditional_format(
-            "A1:N36",
+            "A1:N60",
             {
                 "type": "blanks",
                 "format": formats["filler"],

@@ -285,7 +285,7 @@ def main(args: list, mols: pd.DataFrame, aw: AverageWriter) -> None:
 
     if last_arg == "-s" or last_arg == "-sp" or last_arg == "-ps":
         print("Storing Results...")
-        rw.store_data()
+        # rw.store_data()
 
     # * IV. Print Results
 

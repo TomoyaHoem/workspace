@@ -20,11 +20,15 @@ class AlgData:
         self._running_data = []
 
     @property
+    def pareto_len(self):
+        return math.floor(np.mean(len(self._pareto)))
+
+    @property
     def pareto(self):
-        return math.floor(np.mean(self._pareto))
+        return self._pareto
 
     @pareto.setter
-    def pareto(self, value: int):
+    def pareto(self, value: list):
         self._pareto.append(value)
 
     @property
