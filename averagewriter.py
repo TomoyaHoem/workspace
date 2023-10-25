@@ -243,7 +243,7 @@ class AverageWriter:
         ax.legend()
 
         ax.set_xlabel("Generation")
-        ax.set_ylabel("$\Theta$", rotation=0)
+        ax.set_ylabel("$\\varnothing_{k,t}$", rotation=0)
         ax.yaxis.set_label_coords(-0.075, 0.5)
         imgdata = io.BytesIO()
         fig.savefig(imgdata, format="JPEG")
