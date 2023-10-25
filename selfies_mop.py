@@ -38,7 +38,7 @@ from pymoo.util.ref_dirs import get_reference_directions
 alphabet = sf.get_semantic_robust_alphabet()
 
 SEED = 1
-NUM_ITERATIONS = 10
+NUM_ITERATIONS = 200
 POP_SIZE = 100
 
 # TODO Does not work might need to be implemented as constraint
@@ -285,7 +285,7 @@ def main(args: list, mols: pd.DataFrame, aw: AverageWriter) -> None:
 
     if last_arg == "-s" or last_arg == "-sp" or last_arg == "-ps":
         print("Storing Results...")
-        # rw.store_data()
+        rw.store_data()
 
     # * IV. Print Results
 
@@ -354,7 +354,7 @@ if __name__ == "__main__":
     print("# " * 10)
     print("")
     # Settings
-    pop_sizes = [50]  # , 100, 250, 500, 1000]
+    pop_sizes = [250]  # , 100, 250, 500, 1000]
     algs = ["nsga2", "nsga3", "moead"]
     store_print = "-s"
     repeat = 3
