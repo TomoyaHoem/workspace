@@ -40,6 +40,7 @@ alphabet = sf.get_semantic_robust_alphabet()
 SEED = 1
 NUM_ITERATIONS = 200
 POP_SIZE = 100
+REPEAT = 5
 
 # TODO Does not work might need to be implemented as constraint
 # remodel LogP to
@@ -354,15 +355,15 @@ if __name__ == "__main__":
     print("# " * 10)
     print("")
     # Settings
-    pop_sizes = [250]  # , 100, 250, 500, 1000]
+    pop_sizes = [50, 100, 250, 500, 1000]
     algs = ["nsga2", "nsga3", "moead"]
     store_print = "-s"
-    repeat = 3
+    repeat = REPEAT
     # Read Data
-    d_sets = ["fragments", "druglike"]
-    fragment_mols = read_data(d_sets[0])
-    druglike_mols = read_data(d_sets[1])
-    mol_sets = [fragment_mols, druglike_mols]
+    d_sets = ["druglike"]
+    # fragment_mols = read_data(d_sets[0])
+    druglike_mols = read_data(d_sets[0])
+    mol_sets = [druglike_mols]
     # Run
     r_count, i_count = 0, 0
     print("Starting runs...")

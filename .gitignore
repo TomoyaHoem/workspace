@@ -22,7 +22,8 @@ Drug-Like/
 playground.py
 
 # Excel output
-ResultWriter/
+ResultWriter/*
+!ResultWriter/Transfer/
 
 # Molecule images
 mol.png
