@@ -17,6 +17,7 @@ __pycache__/
 # SMILES Data folders
 Fragments/
 Drug-Like/
+Subset/
 
 # playground
 playground.py
