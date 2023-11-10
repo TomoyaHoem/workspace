@@ -71,7 +71,7 @@ def main() -> None:
 
     # pickle dataframe
     print("pickle...")
-    molecules.to_pickle("./pkl/subset.pkl")
+    molecules.to_pickle("./pkl/subset-lfs.pkl")
     print("--- Finished Pickling ---")
 
 
