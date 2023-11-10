@@ -1,6 +1,7 @@
 import os
 import sys
 import random
+import itertools
 
 import pandas as pd
 import numpy as np
@@ -181,7 +182,9 @@ class MOPGenerator(GoalDirectedGenerator):
         )
 
         # convert SELFIES to SMILES
-        top = res.X[np.argsort(res.F[:, 0])].tolist()
+        top = list(
+            itertools.chain.from_iterable(res.X[np.argsort(res.F[:, 0])].tolist())
+        )
         top_smiles = [sf.decoder(x) for x in top]
 
         # return SMILES
@@ -191,7 +194,9 @@ class MOPGenerator(GoalDirectedGenerator):
 def main() -> None:
     optimiser = MOPGenerator()
 
-    json_file_path = os.path.join("./guacamol/test1", "goal_directed_results.json")
+    json_file_path = os.path.join(
+        "./guacamol_benchmark/test1", "goal_directed_results.json"
+    )
     assess_goal_directed_generation(
         optimiser, json_output_file=json_file_path, benchmark_version="v2"
     )
