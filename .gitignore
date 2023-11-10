@@ -11,6 +11,9 @@
 # Built Visual Studio Code Extensions
 *.vsix
 
+# venv
+.venv/
+
 # cache
 __pycache__/
 
