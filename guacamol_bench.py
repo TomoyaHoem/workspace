@@ -34,6 +34,8 @@ from guacamol.scoring_function import ScoringFunction
 SEED = 1
 alphabet = sf.get_semantic_robust_alphabet()
 
+# hello
+
 
 class SELFIESProblem(ElementwiseProblem):
     def __init__(self, selfies):
