@@ -34,6 +34,6 @@ ResultWriter/*
 mol.png
 mol*.png
 
-# pkl files
+# pkl files / data
 pkl/*
-# (!)pkl/*lfs.pkl
+*rar
