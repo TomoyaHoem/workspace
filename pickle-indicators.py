@@ -20,12 +20,14 @@ def main() -> None:
 
     start = time.time()
     # unpickle
-    molecules = pd.read_pickle("./pkl/1%-druglike-lfs.pkl")
+    molecules = pd.read_pickle("./pkl/subset-lfs.pkl")
     print(molecules.head())
     end = time.time()
     dur = round(end - start, 3)
 
     print(f"Elapsed time to unpickle: {dur}s")
+
+    # get mol object from smiles
 
     # evaluate all molecules for qed, log, sa
     start = time.time()
@@ -49,7 +51,7 @@ def main() -> None:
     print(molecules.head())
 
     # pickle result
-    molecules.to_pickle("./pkl/1%-druglike-indicators-lfs.pkl")
+    molecules.to_pickle("./pkl/subset-indicators.pkl")
     print("--- Finished Pickling ---")
 
 

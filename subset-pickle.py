@@ -1,10 +1,12 @@
 import os
 import time
+import random
+import linecache
 import pandas as pd
 from alive_progress import alive_bar
 
 TOTAL_NUM_MOLS = 435_000_000
-MOL_PERCENTAGE_PER_FILE = 0.1
+MOL_PERCENTAGE_PER_FILE = 0.01
 
 
 def set_d_types(df):
@@ -32,11 +34,12 @@ def read_molecules(cwd: str) -> pd.DataFrame:
                 with open(curP, "r", encoding="utf-8", errors="ignore") as f:
                     num_lines = sum(bl.count("\n") for bl in blocks(f))
                 with open(curP) as f:
-                    next(f)
-                    for line in f:
-                        if index > int(MOL_PERCENTAGE_PER_FILE * num_lines):
-                            # print("LIMIT")
-                            break
+                    idxs = random.sample(
+                        range(1, num_lines + 1),
+                        round(MOL_PERCENTAGE_PER_FILE * num_lines),
+                    )
+                    mols = [linecache.getline(curP, i) for i in idxs]
+                    for line in mols:
                         smile = line.split()[0]
                         mol_row = {
                             "Smiles": smile,
