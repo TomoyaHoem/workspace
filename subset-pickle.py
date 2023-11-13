@@ -40,7 +40,10 @@ def read_molecules(cwd: str) -> pd.DataFrame:
                     )
                     mols = [linecache.getline(curP, i) for i in idxs]
                     for line in mols:
-                        smile = line.split()[0]
+                        try:
+                            smile = line.split()[0]
+                        except IndexError:
+                            continue
                         mol_row = {
                             "Smiles": smile,
                         }
