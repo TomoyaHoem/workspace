@@ -15,20 +15,15 @@ sys.path.append(os.path.join(RDConfig.RDContribDir, "SA_Score"))
 import sascorer  # type: ignore
 
 
-def main() -> None:
-    print(f"Entry")
-
-    start = time.time()
-    # unpickle
-    molecules = pd.read_pickle("./pkl/filtred-subset-lfs.pkl")
-    print(molecules.head())
-    end = time.time()
-    dur = round(end - start, 3)
-
-    print(f"Elapsed time to unpickle: {dur}s")
+def indicators(molecules: pd.DataFrame) -> pd.DataFrame:
+    print("Starting next batch...")
 
     # get mol object from smiles
-    molecules["Mol"] = molecules["Smiles"].apply(Chem.MolFromSmiles)  
+    start = time.time()
+    molecules["Mol"] = molecules["Smiles"].apply(Chem.MolFromSmiles)
+    end = time.time()
+    dur = round(end - start, 3)
+    print(f"Elapsed time to get mol object: {dur}s")
 
     # evaluate all molecules for qed, log, sa
     start = time.time()
@@ -49,13 +44,35 @@ def main() -> None:
     dur = round(end - start, 3)
     print(f"Elapsed time to calculate SA score: {dur}s")
 
-    print(molecules.head())
-
     molecules.drop(columns=["Mol"])
 
+    return molecules
+
+
+def main() -> None:
+    print(f"Entry")
+
+    start = time.time()
+    # unpickle
+    molecules = pd.read_pickle("./pkl/subset-lfs.pkl")
+    print(molecules.head())
+    end = time.time()
+    dur = round(end - start, 3)
+
+    print(f"Elapsed time to unpickle: {dur}s")
+
+    dfs = np.array_split(molecules, 100)
+    mol_dfs = []
+    for df in dfs:
+        mol_dfs.append(indicators(df))
+
+    molecules = pd.concat(mol_dfs)
+
+    print(molecules.head())
+
     # pickle result
-    molecules.to_pickle("./pkl/subset-indicators.pkl")
-    print("--- Finished Pickling ---")
+    # molecules.to_pickle("./pkl/subset-indicators.pkl")
+    # print("--- Finished Pickling ---")
 
 
 if __name__ == "__main__":
