@@ -20,7 +20,7 @@ def main() -> None:
 
     start = time.time()
     # unpickle
-    molecules = pd.read_pickle("./pkl/subset-lfs.pkl")
+    molecules = pd.read_pickle("./pkl/filtred-subset-lfs.pkl")
     print(molecules.head())
     end = time.time()
     dur = round(end - start, 3)
@@ -28,6 +28,7 @@ def main() -> None:
     print(f"Elapsed time to unpickle: {dur}s")
 
     # get mol object from smiles
+    molecules["Mol"] = molecules["Smiles"].apply(Chem.MolFromSmiles)  
 
     # evaluate all molecules for qed, log, sa
     start = time.time()
@@ -49,6 +50,8 @@ def main() -> None:
     print(f"Elapsed time to calculate SA score: {dur}s")
 
     print(molecules.head())
+
+    molecules.drop(columns=["Mol"])
 
     # pickle result
     molecules.to_pickle("./pkl/subset-indicators.pkl")

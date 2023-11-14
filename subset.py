@@ -51,8 +51,6 @@ def main() -> None:
     dur = round(end - start, 3)
     print(f"Elapsed time to unpickle: {dur}s")
 
-    molecules = molecules.head(10000)
-
     print(len(molecules))
     print(molecules.head())
 
@@ -64,6 +62,11 @@ def main() -> None:
 
     print(len(molecules))
     print(molecules.head())
+
+        # pickle dataframe
+    print("pickle...")
+    molecules.to_pickle("./pkl/filtred-subset-lfs.pkl")
+    print("--- Finished Pickling ---")
 
 
 if __name__ == "__main__":
