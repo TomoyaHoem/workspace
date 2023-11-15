@@ -1,5 +1,6 @@
 import sys
 import os
+import gc
 import numpy as np
 import pandas as pd
 import time
@@ -44,7 +45,7 @@ def indicators(molecules: pd.DataFrame) -> pd.DataFrame:
     dur = round(end - start, 3)
     print(f"Elapsed time to calculate SA score: {dur}s")
 
-    molecules.drop(columns=["Mol"])
+    molecules = molecules.drop(columns=["Mol"])
 
     return molecules
 
@@ -54,25 +55,30 @@ def main() -> None:
 
     start = time.time()
     # unpickle
-    molecules = pd.read_pickle("./pkl/subset-lfs.pkl")
+    molecules = pd.read_pickle("./pkl/filtred-subset-lfs.pkl")
     print(molecules.head())
     end = time.time()
     dur = round(end - start, 3)
 
     print(f"Elapsed time to unpickle: {dur}s")
 
-    dfs = np.array_split(molecules, 100)
+    dfs = np.array_split(molecules, 3)
     mol_dfs = []
-    for df in dfs:
+    for i, df in enumerate(dfs):
         mol_dfs.append(indicators(df))
+        if (i+1) % 10 == 0:
+            molecules = pd.concat(mol_dfs)
+            # pickle result
+            print("Pickle...")
+            molecules.to_pickle("./pkl/subset-indicators.pkl_" + str(int(i / 9)))
+            print("--- Finished Pickling ---")
+            mol_dfs = []
+            del molecules
+            gc.collect()
 
-    molecules = pd.concat(mol_dfs)
 
-    print(molecules.head())
 
-    # pickle result
-    # molecules.to_pickle("./pkl/subset-indicators.pkl")
-    # print("--- Finished Pickling ---")
+    print("--- Finished ---")
 
 
 if __name__ == "__main__":
