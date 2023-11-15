@@ -62,21 +62,21 @@ def main() -> None:
 
     print(f"Elapsed time to unpickle: {dur}s")
 
-    dfs = np.array_split(molecules, 3)
+    dfs = np.array_split(molecules, 100)
     mol_dfs = []
-    for i, df in enumerate(dfs):
-        mol_dfs.append(indicators(df))
+    # 0, 20 | 20, 40 | 40, 60 | 60, 80 | 80, 100
+    for i in range(80, 100):
+        mol_dfs.append(indicators(dfs[i]))
         if (i+1) % 10 == 0:
             molecules = pd.concat(mol_dfs)
             # pickle result
             print("Pickle...")
             molecules.to_pickle("./pkl/subset-indicators.pkl_" + str(int(i / 9)))
             print("--- Finished Pickling ---")
+            del mol_dfs
             mol_dfs = []
             del molecules
             gc.collect()
-
-
 
     print("--- Finished ---")
 
