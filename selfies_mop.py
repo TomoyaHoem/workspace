@@ -19,6 +19,8 @@ from rdkit.Chem import Crippen
 
 from rdkit.Chem import RDConfig
 
+from guacamole_tasks import Task
+
 sys.path.append(os.path.join(RDConfig.RDContribDir, "SA_Score"))
 import sascorer  # type: ignore
 
@@ -65,25 +67,22 @@ REPEAT = 5
 
 
 class SELFIESProblem(ElementwiseProblem):
-    def __init__(self, selfies):
-        super().__init__(n_var=1, n_obj=3, n_ieq_constr=0)
+    def __init__(self, selfies, task: str):
+        self.task = Task(task)
+        super().__init__(n_var=1, n_obj=self.task.num_obj, n_ieq_constr=0)
         self.SELFIES = selfies
 
     def _evaluate(self, x, out, *args, **kwargs):
-        qed, logp, sa = 0, 0, 0
-
+        # decode SELFIES individual to SMILES
         mol = Chem.MolFromSmiles(sf.decoder(x[0]))
 
-        qed = QED.default(mol)
-        m_logp = Crippen.MolLogP(mol)
-        try:
-            sa = sascorer.calculateScore(mol)
-        except Exception as e:
-            print(e)
-            print(x[0])
-            print(sf.decoder(x[0]))
+        # add QED and SA objective, invert QED to minimize
+        # add guacamole task objectives, invert to minimize
+        objectives = [-QED.default(mol), sascorer.calculateScore(mol)] + [
+            -obj.score_mol(mol) for obj in self.task()
+        ]
 
-        out["F"] = np.array([-qed, -m_logp, sa], dtype=float)
+        out["F"] = np.array(objectives, dtype=float)
 
 
 class SEFLIESSampling(Sampling):
@@ -355,21 +354,19 @@ if __name__ == "__main__":
     print("# " * 10)
     print("")
     # Settings
-    pop_sizes = [50, 100, 250, 500, 1000]
+    pop_sizes = [100, 500]
     algs = ["nsga2", "nsga3", "moead"]
+    tasks = ["Cobimetinib", "Fexofenadine", "Osimertinib", "Pioglitazone", "Ranolazine"]
     store_print = "-s"
     repeat = REPEAT
     # Read Data
-    d_sets = ["druglike"]
-    # fragment_mols = read_data(d_sets[0])
-    druglike_mols = read_data(d_sets[0])
-    mol_sets = [druglike_mols]
+    input_mols = read_data("subset")
     # Run
     r_count, i_count = 0, 0
     print("Starting runs...")
     print("-" * 25)
     print("")
-    for d, n in zip(mol_sets, d_sets):
+    for t in tasks:
         for p in pop_sizes:
             aw = AverageWriter(algs)
             for i in range(repeat):
@@ -377,8 +374,6 @@ if __name__ == "__main__":
                 filename = (
                     "MOP_Experiment_"
                     + str(r_count)
-                    + "_"
-                    + n
                     + "_"
                     + "_".join(algs)
                     + "_"
@@ -398,8 +393,6 @@ if __name__ == "__main__":
                 + str(i_count)
                 + "_"
                 + str(repeat)
-                + "_"
-                + n
                 + "_"
                 + "_".join(algs)
                 + "_"

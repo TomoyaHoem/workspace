@@ -32,29 +32,28 @@ from pymoo.core.duplicate import ElementwiseDuplicateElimination
 from pymoo.util.ref_dirs import get_reference_directions
 from pymoo.visualization.scatter import Scatter
 
+from guacamole_tasks import Task
+
 alphabet = sf.get_semantic_robust_alphabet()
 
 
 class SELFIESProblem(ElementwiseProblem):
-    def __init__(self, selfies):
-        super().__init__(n_var=1, n_obj=3, n_ieq_constr=0)
+    def __init__(self, selfies, task: str):
+        self.task = Task(task)
+        super().__init__(n_var=1, n_obj=self.task.num_obj, n_ieq_constr=0)
         self.SELFIES = selfies
 
     def _evaluate(self, x, out, *args, **kwargs):
-        qed, logp, sa = 0, 0, 0
-
+        # decode SELFIES individual to SMILES
         mol = Chem.MolFromSmiles(sf.decoder(x[0]))
 
-        qed = QED.default(mol)
-        logp = Crippen.MolLogP(mol)
-        try:
-            sa = sascorer.calculateScore(mol)
-        except Exception as e:
-            print(e)
-            print(x[0])
-            print(sf.decoder(x[0]))
+        # add QED and SA objective, invert QED to minimize
+        # add guacamole task objectives, invert to minimize
+        objectives = [-QED.default(mol), sascorer.calculateScore(mol)] + [
+            -obj.score_mol(mol) for obj in self.task()
+        ]
 
-        out["F"] = np.array([-qed, -logp, sa], dtype=float)
+        out["F"] = np.array(objectives, dtype=float)
 
 
 class SEFLIESSampling(Sampling):
@@ -212,7 +211,7 @@ def main() -> None:
         return
 
     res = minimize(
-        SELFIESProblem(selfies=molecules["SELFIES"].to_numpy()),
+        SELFIESProblem(selfies=molecules["SELFIES"].to_numpy(), task="Cobimetinib"),
         algorithm,
         ("n_gen", 100),
         seed=1,
