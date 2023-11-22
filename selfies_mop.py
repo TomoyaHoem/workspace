@@ -252,7 +252,15 @@ def main(args: list, mols: pd.DataFrame, aw: AverageWriter) -> None:
     # * II. Run Algorithms
 
     results = []
-    sets = []
+    sets = {
+        "Data": "ZINC20-Subset",
+        "Seed": SEED,
+        "Pop_size": POP_SIZE,
+        "N_Gen": NUM_ITERATIONS,
+        "Sampling": "Random uniform",
+        "Crossover": "1-point, 100%",
+        "Mutation": "Random replace, 40%",
+    }
 
     for alg_n, alg in zip(algs, algorithms):
         r = run_alg(molecules, alg, alg_n)
@@ -263,18 +271,8 @@ def main(args: list, mols: pd.DataFrame, aw: AverageWriter) -> None:
             obj_vals[1] *= -1
 
         results.append(r)
-        sets.append(
-            [
-                ("Data", args[0]),
-                ("Seed", SEED),
-                ("Pop_size", alg.pop_size),
-                ("N_Gen", NUM_ITERATIONS),
-                ("Sampling", "Random uniform"),
-                ("Crossover", "1-point, 100%"),
-                ("Mutation", "Random replace, 40%"),
-                ("Pareto Members", len(r.F[:, 0])),
-            ]
-        )
+
+    # ("Pareto Members", len(r.F[:, 0])),
 
     # * III. Store Results
 

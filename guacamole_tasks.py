@@ -28,22 +28,28 @@ from guacamol.scoring_function import MoleculewiseScoringFunction, BatchScoringF
 class Task:
     def __init__(self, task: str) -> None:
         self.obj_fun, self.num_obj = None, None
+        self.objectives = ["QED", "SA"]
         # QED, SA + guacamole tasks
         if task == "Cobimetinib":
             self.obj_fun = self.cobimetinib()
             self.num_obj = 2 + 5
+            self.objectives += ["FCFP4", "ECFP6", "RTB", "AR", "CNS"]
         elif task == "Fexofenadine":
             self.obj_fun = self.fexofenadine()
             self.num_obj = 2 + 3
+            self.objectives += ["AP", "TPSA", "LogP"]
         elif task == "Osimertinib":
             self.obj_fun = self.osimertinib()
             self.num_obj = 2 + 4
+            self.objectives += ["FCFP4", "ECFP6", "TPSA", "LogP"]
         elif task == "Pioglitazone":
             self.obj_fun = self.pioglitazone()
             self.num_obj = 2 + 3
+            self.objectives += ["FCFP4", "MolW", "RTB"]
         elif task == "Ranolazine":
             self.obj_fun = self.ranolazine()
             self.num_obj = 2 + 4
+            self.objectives += ["AP", "LogP", "TPSA", "FC"]
         else:
             print(f"ERROR: NO VALID TASK PROVIDED, input was {self.task}")
 
