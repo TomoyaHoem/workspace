@@ -3,8 +3,7 @@ import os
 import sys
 import random
 
-from collections import Counter
-from resultwriter import ResultWriter
+from result_processor import ResultProcessor
 from averagewriter import AverageWriter
 
 import pandas as pd
@@ -15,7 +14,6 @@ import selfies as sf
 
 from rdkit import Chem
 from rdkit.Chem import QED
-from rdkit.Chem import Crippen
 
 from rdkit.Chem import RDConfig
 
@@ -40,35 +38,14 @@ from pymoo.util.ref_dirs import get_reference_directions
 alphabet = sf.get_semantic_robust_alphabet()
 
 SEED = 1
-NUM_ITERATIONS = 200
+NUM_ITERATIONS = 10  # 200
 POP_SIZE = 100
-REPEAT = 5
-
-# TODO Does not work might need to be implemented as constraint
-# remodel LogP to
-# f(x) = -0.5x + 0.5 for x < 1
-# h(x) = 5 ^ ((x - 20) / 10) for x < 20
-# 1 else
-# def modified_logp(mol: Chem.rdchem.Mol):
-#     logP = Crippen.MolLogP(mol)
-
-#     m_logp = 0
-
-#     if logP < -1:
-#         m_logp = 1
-#     elif logP < 1:
-#         m_logp = -0.5 * logP + 0.5
-#     elif logP < 20:
-#         m_logp = 5 ** ((logP - 20) / 10)
-#     else:
-#         m_logp = 1
-
-#     return m_logp
+REPEAT = 1  # 10
 
 
 class SELFIESProblem(ElementwiseProblem):
-    def __init__(self, selfies, task: str):
-        self.task = Task(task)
+    def __init__(self, selfies, task: Task):
+        self.task = task
         super().__init__(n_var=1, n_obj=self.task.num_obj, n_ieq_constr=0)
         self.SELFIES = selfies
 
@@ -183,6 +160,7 @@ class SELFIESDuplicateElimination(ElementwiseDuplicateElimination):
         return a.X[0] == b.X[0]
 
 
+# TODO: fix
 def print_help():
     """
     Arguments: Data Algorithm1 Algorithm2
@@ -190,7 +168,10 @@ def print_help():
     print("")
 
 
-def main(args: list, mols: pd.DataFrame, aw: AverageWriter) -> None:
+def main(
+    args: list,
+    mols: pd.DataFrame,
+):  # aw: AverageWriter) -> None:
     print("Passed args: ", end=" ")
     print(*args)
     print(f"Popsize: {POP_SIZE}, Iterations: {NUM_ITERATIONS}")
@@ -204,11 +185,14 @@ def main(args: list, mols: pd.DataFrame, aw: AverageWriter) -> None:
 
     if len(args) < 4:
         print(
-            "ERROR: invalid number of arguments please provide <Data [Algorithms] Filename Options>."
+            "ERROR: invalid number of arguments please provide <[Algorithms] Filename Options Task>."
         )
         return
 
-    algs = args[1]
+    # unpack arguments
+    algs, filename, store_print, guac = args
+    task = Task(guac)
+
     algorithms = []
 
     for alg in algs:
@@ -224,7 +208,7 @@ def main(args: list, mols: pd.DataFrame, aw: AverageWriter) -> None:
             )
         elif alg == "nsga3":
             # create the reference directions to be used for the optimization
-            ref_dirs = get_reference_directions("energy", 3, POP_SIZE)
+            ref_dirs = get_reference_directions("energy", task.num_obj, POP_SIZE)
             # run pymoo nsga3
             algorithm = NSGA3(
                 ref_dirs=ref_dirs,
@@ -234,7 +218,7 @@ def main(args: list, mols: pd.DataFrame, aw: AverageWriter) -> None:
                 eliminate_duplicates=SELFIESDuplicateElimination(),
             )
         elif alg == "moead":
-            ref_dirs = get_reference_directions("energy", 3, POP_SIZE)
+            ref_dirs = get_reference_directions("energy", task.num_obj, POP_SIZE)
             # run pymoo moead
             algorithm = MOEAD(
                 ref_dirs=ref_dirs,
@@ -254,6 +238,7 @@ def main(args: list, mols: pd.DataFrame, aw: AverageWriter) -> None:
     results = []
     sets = {
         "Data": "ZINC20-Subset",
+        "Task": guac,
         "Seed": SEED,
         "Pop_size": POP_SIZE,
         "N_Gen": NUM_ITERATIONS,
@@ -263,39 +248,28 @@ def main(args: list, mols: pd.DataFrame, aw: AverageWriter) -> None:
     }
 
     for alg_n, alg in zip(algs, algorithms):
-        r = run_alg(molecules, alg, alg_n)
+        r = run_alg(molecules, alg, alg_n, task)
 
-        # maximize objectives
-        for obj_vals in r.F:
-            obj_vals[0] *= -1
-            obj_vals[1] *= -1
+        # multiply negative objectives by -1 since they were minimized
+        # all except at index i = 1 because SA score should remain minimized
+        r.F = np.array(
+            [[-v if i != 1 else v for i, v in enumerate(indiv)] for indiv in r.F]
+        )
 
         results.append(r)
 
-    # ("Pareto Members", len(r.F[:, 0])),
-
     # * III. Store Results
 
-    rw = ResultWriter(molecules, results, sets, args[2], SEED)
-    aw.append_results(results)
-
-    last_arg = args[-1]
-
-    if last_arg == "-s" or last_arg == "-sp" or last_arg == "-ps":
-        print("Storing Results...")
-        rw.store_data()
-
-    # * IV. Print Results
-
-    if last_arg == "-p" or last_arg == "-sp" or last_arg == "-ps":
-        print("Printing Results...")
-        rw.print_data(molecules, results, NUM_ITERATIONS)
+    # rw = ResultWriter(molecules, results, sets, args[2], SEED)
+    rp = ResultProcessor(molecules, results, task, sets, filename)
+    rp(store_print)
+    # aw.append_results(results)
 
 
-def run_alg(molecules, algorithm, alg: str):
+def run_alg(molecules, algorithm, alg: str, task: Task):
     print(f"Running {alg.upper()}...")
     res = minimize(
-        SELFIESProblem(selfies=molecules["SELFIES"].to_numpy()),
+        SELFIESProblem(selfies=molecules["SELFIES"].to_numpy(), task=task),
         algorithm,
         ("n_gen", NUM_ITERATIONS),
         # seed=SEED,
@@ -328,6 +302,9 @@ def read_data(data: str):
 
         # add a column to separate pareto front
         molecules["pareto"] = "#9C95994C"
+    elif data == "subset":
+        # unpickle
+        molecules = pd.read_pickle("./pkl/subset-selfies.pkl")
     else:
         print("ERROR: invalid data name")
         return
@@ -343,7 +320,7 @@ def read_data(data: str):
 
 if __name__ == "__main__":
     """
-    Datasets: fragments or druglike
+    Datasets: subset
     Algorithms: NSGA2, NSGA3, MOEAD
     Store/Print options: -p, -s or -ps / -sp
     """
@@ -352,9 +329,11 @@ if __name__ == "__main__":
     print("# " * 10)
     print("")
     # Settings
-    pop_sizes = [100, 500]
-    algs = ["nsga2", "nsga3", "moead"]
-    tasks = ["Cobimetinib", "Fexofenadine", "Osimertinib", "Pioglitazone", "Ranolazine"]
+    pop_sizes = [100]  # , 500]
+    algs = ["nsga2", "nsga3"]  # , "moead"]
+    tasks = [
+        "Cobimetinib"
+    ]  # , "Fexofenadine", "Osimertinib", "Pioglitazone", "Ranolazine"]
     store_print = "-s"
     repeat = REPEAT
     # Read Data
@@ -366,7 +345,7 @@ if __name__ == "__main__":
     print("")
     for t in tasks:
         for p in pop_sizes:
-            aw = AverageWriter(algs)
+            # aw = AverageWriter(algs)
             for i in range(repeat):
                 POP_SIZE = p
                 filename = (
@@ -381,25 +360,25 @@ if __name__ == "__main__":
                     + ".xlsx"
                 )
                 r_count += 1
-                main([n, algs, filename, store_print], d, aw)
+                main([algs, filename, store_print, t], input_mols)  # , aw)
                 print(f"Finished run {r_count}")
                 print("-" * 25)
                 print("")
             print("Storing Averages...")
-            aw.store_averages(
-                "MOP_Experiment_Averages_"
-                + str(i_count)
-                + "_"
-                + str(repeat)
-                + "_"
-                + "_".join(algs)
-                + "_"
-                + str(NUM_ITERATIONS)
-                + "_"
-                + str(POP_SIZE)
-                + ".xlsx",
-                repeat,
-            )
+            # aw.store_averages(
+            #     "MOP_Experiment_Averages_"
+            #     + str(i_count)
+            #     + "_"
+            #     + str(repeat)
+            #     + "_"
+            #     + "_".join(algs)
+            #     + "_"
+            #     + str(NUM_ITERATIONS)
+            #     + "_"
+            #     + str(POP_SIZE)
+            #     + ".xlsx",
+            #     repeat,
+            # )
             i_count += 1
             print("")
 

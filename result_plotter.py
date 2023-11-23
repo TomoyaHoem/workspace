@@ -28,10 +28,11 @@ def fig_to_im(size: tuple) -> io.BytesIO:
     plt.gcf().set_size_inches(cm2inch(size))
     imgdata = io.BytesIO()
     plt.gcf().savefig(imgdata, format="JPEG", dpi=100)
+    plt.clf()
     return imgdata
 
 
-def single_pc_plot(obj_vals: list[list[float]], tasks: list[str]) -> io.BytesIO:
+def single_pc_plot(res: list, tasks: list[str]) -> io.BytesIO:
     """
     Function that returns a parallel coordinate plot of the
     final populations objective values as a memory buffer.
@@ -43,11 +44,12 @@ def single_pc_plot(obj_vals: list[list[float]], tasks: list[str]) -> io.BytesIO:
     Returns:
         io.BytesIO: Plot in memory buffer.
     """
-    df = pd.DataFrame(obj_vals, columns=tasks)
+    df = pd.DataFrame(res.F, columns=tasks)
+    df["Algorithm"] = res.algorithm.__class__.__name__
 
-    pd.plotting.parallel_coordinates(df, cols=tasks)
+    pd.plotting.parallel_coordinates(df, class_column="Algorithm", cols=tasks)
 
-    return fig_to_im((12, 8))
+    return fig_to_im((16, 10))
 
 
 def multi_pc_plot(results: list, tasks: list[str]) -> io.BytesIO:
@@ -112,8 +114,9 @@ def single_running_plot(res: list, num_iter: int) -> tuple[io.BytesIO, io.BytesI
     # plot
     fig, ax = plt.subplots()
     running.draw(running.data, ax)
-    r_plot_f = fig_to_im((12, 6))
+    r_plot_f = fig_to_im((16, 10))
+    fig, ax = plt.subplots()
     running.draw(running.data[-1:], ax)
-    r_plot_l = fig_to_im((12, 6))
+    r_plot_l = fig_to_im((16, 10))
 
     return (r_plot_f, r_plot_l)
