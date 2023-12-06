@@ -38,8 +38,8 @@ from pymoo.util.ref_dirs import get_reference_directions
 alphabet = sf.get_semantic_robust_alphabet()
 
 SEED = 1
-NUM_ITERATIONS = 10  # 200
-POP_SIZE = 20
+NUM_ITERATIONS = 200  # 200
+POP_SIZE = 100
 REPEAT = 3  # 10
 
 
@@ -187,7 +187,7 @@ def main(args: list, mols: pd.DataFrame, aw: AverageProceesor) -> None:
         return
 
     # unpack arguments
-    algs, filename, store_print, guac = args
+    algs, filename, store_print, guac, pop = args
     task = Task(guac)
 
     algorithms = []
@@ -197,7 +197,7 @@ def main(args: list, mols: pd.DataFrame, aw: AverageProceesor) -> None:
         if alg == "nsga2":
             # run pymoo nsga2
             algorithm = NSGA2(
-                pop_size=POP_SIZE,
+                pop_size=pop,
                 sampling=SEFLIESSampling(),
                 crossover=SELFIESCrossover(),
                 mutation=SELFIESMutation(),
@@ -205,7 +205,7 @@ def main(args: list, mols: pd.DataFrame, aw: AverageProceesor) -> None:
             )
         elif alg == "nsga3":
             # create the reference directions to be used for the optimization
-            ref_dirs = get_reference_directions("energy", task.num_obj, POP_SIZE)
+            ref_dirs = get_reference_directions("energy", task.num_obj, pop)
             # run pymoo nsga3
             algorithm = NSGA3(
                 ref_dirs=ref_dirs,
@@ -215,7 +215,7 @@ def main(args: list, mols: pd.DataFrame, aw: AverageProceesor) -> None:
                 eliminate_duplicates=SELFIESDuplicateElimination(),
             )
         elif alg == "moead":
-            ref_dirs = get_reference_directions("energy", task.num_obj, POP_SIZE)
+            ref_dirs = get_reference_directions("energy", task.num_obj, pop)
             # run pymoo moead
             algorithm = MOEAD(
                 ref_dirs=ref_dirs,
@@ -237,7 +237,7 @@ def main(args: list, mols: pd.DataFrame, aw: AverageProceesor) -> None:
         "Data": "ZINC20-Subset",
         "Task": guac,
         "Seed": SEED,
-        "Pop_size": POP_SIZE,
+        "Pop_size": pop,
         "N_Gen": NUM_ITERATIONS,
         "Sampling": "Random uniform",
         "Crossover": "1-point, 100%",
@@ -325,7 +325,7 @@ if __name__ == "__main__":
     print("# " * 10)
     print("")
     # Settings
-    pop_sizes = [20]  # , 500]
+    pop_sizes = [100, 500]
     algs = ["nsga2", "nsga3", "moead"]
     tasks = [
         "Cobimetinib"
@@ -352,11 +352,11 @@ if __name__ == "__main__":
                     + "_"
                     + str(NUM_ITERATIONS)
                     + "_"
-                    + str(POP_SIZE)
+                    + str(p)
                     + ".xlsx"
                 )
                 r_count += 1
-                main([algs, filename, store_print, t], input_mols, aw)
+                main([algs, filename, store_print, t, p], input_mols, aw)
                 print(f"Finished run {r_count}")
                 print("-" * 25)
                 print("")
@@ -372,7 +372,7 @@ if __name__ == "__main__":
                 + "_"
                 + str(NUM_ITERATIONS)
                 + "_"
-                + str(POP_SIZE)
+                + str(p)
                 + ".xlsx",
                 repeat,
             )
