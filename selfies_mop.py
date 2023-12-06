@@ -24,6 +24,8 @@ import sascorer  # type: ignore
 
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.algorithms.moo.nsga3 import NSGA3
+
+# from pymoo.algorithms.moo.moead import MOEAD
 from moead_div import MOEAD
 
 from pymoo.optimize import minimize
@@ -39,8 +41,8 @@ alphabet = sf.get_semantic_robust_alphabet()
 
 SEED = 1
 NUM_ITERATIONS = 10  # 200
-POP_SIZE = 20
-REPEAT = 3  # 10
+POP_SIZE = 100
+REPEAT = 10  # 10
 
 
 class SELFIESProblem(ElementwiseProblem):
@@ -56,7 +58,7 @@ class SELFIESProblem(ElementwiseProblem):
         # add QED and SA objective, invert QED to minimize
         # add guacamole task objectives, invert to minimize
         objectives = [-QED.default(mol), sascorer.calculateScore(mol)] + [
-            -obj.score_mol(mol) for obj in self.task()
+            -obj.score(mol) for obj in self.task()
         ]
 
         out["F"] = np.array(objectives, dtype=float)
@@ -128,14 +130,26 @@ class SELFIESMutation(Mutation):
     def __init__(self):
         super().__init__()
 
-    def mutate(self, sfi: str) -> str:
+    def mutate(self, sfi: str, mut: int) -> str:
         selfie_split = list(sf.split_selfies(sfi))
 
-        rnd_symbol = random.sample(list(alphabet), 1)[0]
-        rnd_ind = random.randint(0, len(selfie_split) - 1)
-        # print(f"Replacing random symbol at: {rnd_ind}, with: {rnd_symbol}")
-
-        selfie_split[rnd_ind] = rnd_symbol
+        if mut == 1:
+            # add only if not too long
+            if len(selfie_split) < 20:
+                rnd_symbol = random.sample(list(alphabet), 1)[0]
+                rnd_ind = random.randint(0, len(selfie_split) - 1)
+                selfie_split.insert(rnd_symbol, rnd_ind)
+        elif mut == 2:
+            # replace
+            rnd_symbol = random.sample(list(alphabet), 1)[0]
+            rnd_ind = random.randint(0, len(selfie_split) - 1)
+            # print(f"Replacing random symbol at: {rnd_ind}, with: {rnd_symbol}")
+            selfie_split[rnd_ind] = rnd_symbol
+        else:
+            # remove only if not too short
+            if len(selfie_split) > 6:
+                rnd_ind = random.randint(0, len(selfie_split) - 1)
+                del selfie_split[rnd_ind]
 
         return "".join(selfie_split)
 
@@ -143,11 +157,13 @@ class SELFIESMutation(Mutation):
         # for each individual
         for i in range(len(X)):
             r = np.random.random()
+            # add, replace, remove
+            mut = np.random.randint(1, 4)
 
-            # with a probabilty of 40% - replace one random token
+            # with a probabilty of 40% - apply mutation
             if r < 0.4:
                 try:
-                    X[i, 0] = self.mutate(X[i, 0])
+                    X[i, 0] = self.mutate(X[i, 0], mut)
                 except Exception as e:
                     print(e)
                     print(X[i, 0])
@@ -325,7 +341,7 @@ if __name__ == "__main__":
     print("# " * 10)
     print("")
     # Settings
-    pop_sizes = [20]  # , 500]
+    pop_sizes = [100]  # , 500]
     algs = ["nsga2", "nsga3", "moead"]
     tasks = [
         "Cobimetinib"
