@@ -58,6 +58,12 @@ def get_format_dict(workbook: xlsxwriter.workbook) -> dict:
     pareto_cell_format.set_align("center")
     pareto_cell_format.set_align("vcenter")
 
+    obj_val_cell_format = workbook.add_format()
+    obj_val_cell_format.set_bold()
+
+    std_cell_format = workbook.add_format()
+    std_cell_format.set_font_size(8)
+
     formats = {
         "filler": filler_cell_format,
         "title": title_cell_format,
@@ -67,6 +73,8 @@ def get_format_dict(workbook: xlsxwriter.workbook) -> dict:
         "set": set_cell_format,
         "fit": fit_cell_format,
         "pareto": pareto_cell_format,
+        "obj_val": obj_val_cell_format,
+        "std": std_cell_format,
     }
     return formats
 
@@ -95,9 +103,11 @@ def resize(image: Image, size: tuple[int, int], format="JPEG"):
     return buffer_image(image, format)
 
 
-def write_results(filename: str, data: list, comp_data: list, tasks: list) -> None:
+def write_single_results(
+    filename: str, data: list, comp_data: list, tasks: list
+) -> None:
     """
-    Write experiment results to excel file.
+    Write experiment results of a single run to excel file.
 
     Parameters:
         filename: Excel filename.
@@ -171,7 +181,13 @@ def write_results(filename: str, data: list, comp_data: list, tasks: list) -> No
         # Add running last
         worksheet.insert_image("M51", "", {"image_data": alg_data[6][1]})
 
-        # VI. Filler
+        # VI. Internal similarity
+        worksheet.merge_range("M75:X75", "INTERNAL SIMILARITY", formats["header"])
+        worksheet.merge_range("M76:X76", ".", formats["img"])
+        # Add running last
+        worksheet.insert_image("M76", "", {"image_data": alg_data[7]})
+
+        # VII. Filler
         last += 11
         worksheet.conditional_format(
             "A1:AB" + str(last),
@@ -181,7 +197,7 @@ def write_results(filename: str, data: list, comp_data: list, tasks: list) -> No
             },
         )
 
-    # VII. Comparison
+    # VIII. Comparison
     if comp_data:
         worksheet = workbook.add_worksheet("Comparison")
         # 1. Multi PC plot
@@ -217,5 +233,91 @@ def write_results(filename: str, data: list, comp_data: list, tasks: list) -> No
                 "format": formats["filler"],
             },
         )
+
+    workbook.close()
+
+
+def write_multi_results(filename: str, data: list, tasks: list, repeat: int) -> None:
+    """
+    Write experiment results of multiple runs to excel file.
+
+    Parameters:
+        filename: Excel filename.
+        data: Multiple algorithm statistics.
+        repeat: Number of algorithm runs.
+        tasks: Objectives as a string list.
+    """
+    path = os.path.join("ResultWriter", "GuacaMol", filename)
+    workbook = xlsxwriter.Workbook(path)
+    formats = get_format_dict(workbook)
+
+    worksheet = workbook.add_worksheet("AVG_DATASHEET")
+
+    last = 0
+
+    # Title
+    worksheet.merge_range("B1:K1", f"AVERAGE DATA OF {repeat} RUNS", formats["title"])
+
+    # 1. Pareto Values and Number
+    worksheet.merge_range("B3:K3", "FITNESS", formats["header"])
+    worksheet.merge_range("B4:B5", "Objectives", formats["fit"])
+    for i, t in enumerate(tasks):
+        worksheet.write(5 + i, 1, t)
+        last = 5 + i + 1
+    # pareto header
+    worksheet.merge_range(last, 1, last + 1, 1, "#Pareto", formats["fit"])
+    for i, alg_data in enumerate(data[0]):
+        worksheet.merge_range(
+            3, 2 + (i * 3), 3, 4 + (i * 3), alg_data[0].upper(), formats["fit"]
+        )
+        worksheet.write(4, 2 + (i * 3), "MIN", formats["fit"])
+        worksheet.write(4, 3 + (i * 3), "MAX", formats["fit"])
+        worksheet.write(4, 4 + (i * 3), "AVG", formats["fit"])
+        # vals
+        for j, objective in enumerate(alg_data[1]):
+            for k, val in enumerate(objective):
+                worksheet.write_rich_string(
+                    5 + j,
+                    2 + k + (i * 3),
+                    formats["obj_val"],
+                    val[0],
+                    formats["std"],
+                    val[1],
+                )
+        # pareto vals
+        worksheet.merge_range(
+            last, 2 + (i * 3), last + 1, 4 + (i * 3), "", formats["pareto"]
+        )
+        worksheet.write_rich_string(
+            last,
+            2 + (i * 3),
+            formats["obj_val"],
+            alg_data[2][0],
+            formats["std"],
+            alg_data[2][1],
+            formats["pareto"],
+        )
+
+    # 2. Running Plot
+    worksheet.merge_range(
+        last + 5, 1, last + 5, 9, "RUNNING COMPARISON", formats["header"]
+    )
+    worksheet.insert_image(last + 6, 1, "", {"image_data": data[1]})
+
+    # 3. Similarity Plot
+    worksheet.merge_range(
+        last + 28, 1, last + 28, 9, "SIMILARITY COMPARISON", formats["header"]
+    )
+    worksheet.insert_image(last + 29, 1, "", {"image_data": data[2]})
+
+    # 4. Filler
+
+    worksheet.conditional_format(
+        "A1:M62",
+        {
+            "type": "blanks",
+            "format": formats["filler"],
+        },
+    )
 
     workbook.close()

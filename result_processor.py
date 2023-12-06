@@ -2,9 +2,14 @@ import random
 import numpy as np
 import pandas as pd
 from guacamole_tasks import Task
-from result_writer import write_results
+from result_writer import write_single_results
 from result_printer import print_results
-from result_plotter import single_pc_plot, multi_pc_plot, single_running_plot
+from result_plotter import (
+    single_pc_plot,
+    multi_pc_plot,
+    single_running_plot,
+    similarity_plot,
+)
 
 
 class ResultProcessor:
@@ -32,6 +37,7 @@ class ResultProcessor:
         [ [NSGA-II Data], [NSGA-III Data], [MOEA/D Data] ]
         each inner list is organized as follows
         [ algorithm name, initial population (SELFIE), top N pareto members (SELFIE), [settings], number of pareto members, parallel plot, [running_plots] ]
+
         compare_data: list containig ogranized result comparisons as depicted below (lists contain one entry for each algorithm)
         [ parallel coordinate plot (for all algorithms), [algorithm names], [objective comparison], [number of pareto members] ]
         """
@@ -58,7 +64,7 @@ class ResultProcessor:
             return
 
         if "s" in store_print:
-            write_results(
+            write_single_results(
                 self.filename, self.data, self.compare_data, self.task.objectives
             )
 
@@ -117,6 +123,8 @@ class ResultProcessor:
             algorithm_data.append(single_pc_plot(res, self.task.objectives))
             # running plots
             algorithm_data.append(single_running_plot(res, self.settings["N_Gen"]))
+            # internal similarity plot
+            algorithm_data.append(similarity_plot(res))
             # append to data
             self.data.append(algorithm_data)
 

@@ -4,7 +4,7 @@ import sys
 import random
 
 from result_processor import ResultProcessor
-from averagewriter import AverageWriter
+from average_result_processor import AverageProceesor
 
 import pandas as pd
 import numpy as np
@@ -39,8 +39,8 @@ alphabet = sf.get_semantic_robust_alphabet()
 
 SEED = 1
 NUM_ITERATIONS = 10  # 200
-POP_SIZE = 100
-REPEAT = 1  # 10
+POP_SIZE = 20
+REPEAT = 3  # 10
 
 
 class SELFIESProblem(ElementwiseProblem):
@@ -168,10 +168,7 @@ def print_help():
     print("")
 
 
-def main(
-    args: list,
-    mols: pd.DataFrame,
-):  # aw: AverageWriter) -> None:
+def main(args: list, mols: pd.DataFrame, aw: AverageProceesor) -> None:
     print("Passed args: ", end=" ")
     print(*args)
     print(f"Popsize: {POP_SIZE}, Iterations: {NUM_ITERATIONS}")
@@ -260,10 +257,9 @@ def main(
 
     # * III. Store Results
 
-    # rw = ResultWriter(molecules, results, sets, args[2], SEED)
     rp = ResultProcessor(molecules, results, task, sets, filename)
     rp(store_print)
-    # aw.append_results(results)
+    aw.append_results(results)
 
 
 def run_alg(molecules, algorithm, alg: str, task: Task):
@@ -329,8 +325,8 @@ if __name__ == "__main__":
     print("# " * 10)
     print("")
     # Settings
-    pop_sizes = [100]  # , 500]
-    algs = ["nsga2", "nsga3"]  # , "moead"]
+    pop_sizes = [20]  # , 500]
+    algs = ["nsga2", "nsga3", "moead"]
     tasks = [
         "Cobimetinib"
     ]  # , "Fexofenadine", "Osimertinib", "Pioglitazone", "Ranolazine"]
@@ -345,7 +341,7 @@ if __name__ == "__main__":
     print("")
     for t in tasks:
         for p in pop_sizes:
-            # aw = AverageWriter(algs)
+            aw = AverageProceesor(algs, t)
             for i in range(repeat):
                 POP_SIZE = p
                 filename = (
@@ -360,25 +356,26 @@ if __name__ == "__main__":
                     + ".xlsx"
                 )
                 r_count += 1
-                main([algs, filename, store_print, t], input_mols)  # , aw)
+                main([algs, filename, store_print, t], input_mols, aw)
                 print(f"Finished run {r_count}")
                 print("-" * 25)
                 print("")
             print("Storing Averages...")
-            # aw.store_averages(
-            #     "MOP_Experiment_Averages_"
-            #     + str(i_count)
-            #     + "_"
-            #     + str(repeat)
-            #     + "_"
-            #     + "_".join(algs)
-            #     + "_"
-            #     + str(NUM_ITERATIONS)
-            #     + "_"
-            #     + str(POP_SIZE)
-            #     + ".xlsx",
-            #     repeat,
-            # )
+            aw(
+                store_print,
+                "MOP_Experiment_Averages_"
+                + str(i_count)
+                + "_"
+                + str(repeat)
+                + "_"
+                + "_".join(algs)
+                + "_"
+                + str(NUM_ITERATIONS)
+                + "_"
+                + str(POP_SIZE)
+                + ".xlsx",
+                repeat,
+            )
             i_count += 1
             print("")
 

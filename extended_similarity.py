@@ -7,7 +7,7 @@ from rdkit.Chem import AllChem
 
 
 def fingerprints(molecules):
-    start =  time.time()
+    start = time.time()
     mol_fps = []
     for molecule in molecules:
         mol_fps.append(
@@ -20,7 +20,7 @@ def fingerprints(molecules):
     end = time.time()
     dur = round(end - start, 3)
 
-    print(f"Elapsed time to calculate fingerprints: {dur}s")
+    # print(f"Elapsed time to calculate fingerprints: {dur}s")
     return np.array(mol_fps)
 
 
@@ -29,14 +29,14 @@ def internal_similarity(molecules, c_threshold=None, w_factor="fraction") -> flo
     Returns the extended BuB similarity for the list of molecules
     """
     fps = fingerprints(molecules)
-    start =  time.time()
+    start = time.time()
     multiple_comparisons_index = BaroniUrbaniBuser(
         fingerprints=fps, c_threshold=c_threshold, w_factor=w_factor
     )
     end = time.time()
     dur = round(end - start, 3)
 
-    print(f"Elapsed time to calculate similarity: {dur}s")
+    # print(f"Elapsed time to calculate similarity: {dur}s")
     return multiple_comparisons_index.__dict__["BUB_1sim_dis"]
 
 
@@ -48,14 +48,16 @@ def main() -> None:
     num = 500_000
     sample = molecules.sample(num)
 
-    mol_list = sample['Smiles'].tolist()
+    mol_list = sample["Smiles"].tolist()
 
-    start =  time.time()
+    start = time.time()
     print(internal_similarity(mol_list))
     end = time.time()
     dur = round(end - start, 3)
 
-    print(f"Elapsed time to calculate fingerprints and similarity for {num} molecules: {dur}s")
+    print(
+        f"Elapsed time to calculate fingerprints and similarity for {num} molecules: {dur}s"
+    )
 
 
 if __name__ == "__main__":

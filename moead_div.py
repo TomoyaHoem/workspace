@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 
 import selfies as sf
 from rdkit import Chem
-from rdkit.Chem import AllChem
 from rdkit import DataStructs
 
 from pymoo.algorithms.base.genetic import GeneticAlgorithm
@@ -21,16 +20,22 @@ from pymoo.operators.sampling.rnd import FloatRandomSampling
 from pymoo.util.display.multi import MultiObjectiveOutput
 from pymoo.util.reference_direction import default_ref_dirs
 
+from rdkit.Chem import rdFingerprintGenerator
+
 
 def not_contains(pop: np.ndarray, off: object) -> bool:
     sims = []
     offspring = off.X[0]
     offsmile = sf.decoder(offspring)
-    ofp = AllChem.GetMorganGenerator().GetFingerprint(Chem.MolFromSmiles(offsmile))
+    ofp = rdFingerprintGenerator.GetMorganGenerator().GetFingerprint(
+        Chem.MolFromSmiles(offsmile)
+    )
     for i in pop:
         indv = i.X[0]
         psmile = sf.decoder(indv)
-        pfp = AllChem.GetMorganGenerator().GetFingerprint(Chem.MolFromSmiles(psmile))
+        pfp = rdFingerprintGenerator.GetMorganGenerator().GetFingerprint(
+            Chem.MolFromSmiles(psmile)
+        )
         sim = DataStructs.TanimotoSimilarity(ofp, pfp)
         sims.append(sim)
         if sim > 0.3:
