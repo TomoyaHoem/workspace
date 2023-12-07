@@ -2,6 +2,7 @@ import time
 import os
 import sys
 import random
+import tracemalloc
 
 from result_processor import ResultProcessor
 from average_result_processor import AverageProceesor
@@ -161,7 +162,7 @@ class SELFIESMutation(Mutation):
             mut = np.random.randint(1, 4)
 
             # with a probabilty of 40% - apply mutation
-            if r < 0.4:
+            if r < 0.8:
                 try:
                     X[i, 0] = self.mutate(X[i, 0], mut)
                 except Exception as e:
@@ -185,9 +186,12 @@ def print_help():
 
 
 def main(args: list, mols: pd.DataFrame, aw: AverageProceesor) -> None:
+    # unpack arguments
+    algs, filename, store_print, guac, pop = args
+    task = Task(guac)
     print("Passed args: ", end=" ")
     print(*args)
-    print(f"Popsize: {POP_SIZE}, Iterations: {NUM_ITERATIONS}")
+    print(f"Popsize: {pop}, Iterations: {NUM_ITERATIONS}")
     print("")
 
     molecules = mols
@@ -201,10 +205,6 @@ def main(args: list, mols: pd.DataFrame, aw: AverageProceesor) -> None:
             "ERROR: invalid number of arguments please provide <[Algorithms] Filename Options Task>."
         )
         return
-
-    # unpack arguments
-    algs, filename, store_print, guac, pop = args
-    task = Task(guac)
 
     algorithms = []
 
@@ -257,7 +257,7 @@ def main(args: list, mols: pd.DataFrame, aw: AverageProceesor) -> None:
         "N_Gen": NUM_ITERATIONS,
         "Sampling": "Random uniform",
         "Crossover": "1-point, 100%",
-        "Mutation": "Random replace, 40%",
+        "Mutation": "Random add, replace, remove, 80%",
     }
 
     for alg_n, alg in zip(algs, algorithms):
@@ -273,9 +273,9 @@ def main(args: list, mols: pd.DataFrame, aw: AverageProceesor) -> None:
 
     # * III. Store Results
 
-    rp = ResultProcessor(molecules, results, task, sets, filename)
-    rp(store_print)
-    aw.append_results(results)
+    # rp = ResultProcessor(molecules, results, task, sets, filename)
+    # rp(store_print)
+    # aw.append_results(results)
 
 
 def run_alg(molecules, algorithm, alg: str, task: Task):
@@ -341,12 +341,12 @@ if __name__ == "__main__":
     print("# " * 10)
     print("")
     # Settings
-    pop_sizes = [200]  # , 500]
+    pop_sizes = [100]  # , 500]
     algs = ["nsga2", "nsga3", "moead"]
     tasks = [
         "Cobimetinib"
     ]  # , "Fexofenadine", "Osimertinib", "Pioglitazone", "Ranolazine"]
-    store_print = "-s"
+    store_print = ""
     repeat = REPEAT
     # Read Data
     input_mols = read_data("subset")
@@ -355,11 +355,13 @@ if __name__ == "__main__":
     print("Starting runs...")
     print("-" * 25)
     print("")
+
+    tracemalloc.start()
+
     for t in tasks:
         for p in pop_sizes:
-            aw = AverageProceesor(algs, t)
+            # aw = AverageProceesor(algs, t)
             for i in range(repeat):
-                POP_SIZE = p
                 filename = (
                     "MOP_Experiment_"
                     + str(r_count)
@@ -372,28 +374,35 @@ if __name__ == "__main__":
                     + ".xlsx"
                 )
                 r_count += 1
-                main([algs, filename, store_print, t, p], input_mols, aw)
+                main([algs, filename, store_print, t, p], input_mols, None)  # , aw)
                 print(f"Finished run {r_count}")
                 print("-" * 25)
                 print("")
             print("Storing Averages...")
-            aw(
-                store_print,
-                "MOP_Experiment_Averages_"
-                + str(i_count)
-                + "_"
-                + str(repeat)
-                + "_"
-                + "_".join(algs)
-                + "_"
-                + str(NUM_ITERATIONS)
-                + "_"
-                + str(p)
-                + ".xlsx",
-                repeat,
-            )
+            # aw(
+            #     store_print,
+            #     "MOP_Experiment_Averages_"
+            #     + str(i_count)
+            #     + "_"
+            #     + str(repeat)
+            #     + "_"
+            #     + "_".join(algs)
+            #     + "_"
+            #     + str(NUM_ITERATIONS)
+            #     + "_"
+            #     + str(p)
+            #     + ".xlsx",
+            #     repeat,
+            # )
             i_count += 1
             print("")
+
+    snapshot = tracemalloc.take_snapshot()
+    top_stats = snapshot.statistics("lineno")
+
+    print("[ Top 10 ]")
+    for stat in top_stats[:10]:
+        print(stat)
 
     print("")
     print("# " * 10)
