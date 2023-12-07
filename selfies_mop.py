@@ -40,9 +40,8 @@ from pymoo.util.ref_dirs import get_reference_directions
 alphabet = sf.get_semantic_robust_alphabet()
 
 SEED = 1
-NUM_ITERATIONS = 10  # 200
-POP_SIZE = 100
-REPEAT = 10  # 10
+NUM_ITERATIONS = 100  # 200
+REPEAT = 3  # 10
 
 
 class SELFIESProblem(ElementwiseProblem):
@@ -53,12 +52,13 @@ class SELFIESProblem(ElementwiseProblem):
 
     def _evaluate(self, x, out, *args, **kwargs):
         # decode SELFIES individual to SMILES
-        mol = Chem.MolFromSmiles(sf.decoder(x[0]))
+        smile = sf.decoder(x[0])
+        mol = Chem.MolFromSmiles(smile)
 
         # add QED and SA objective, invert QED to minimize
         # add guacamole task objectives, invert to minimize
         objectives = [-QED.default(mol), sascorer.calculateScore(mol)] + [
-            -obj.score(mol) for obj in self.task()
+            -obj.score(smile) for obj in self.task()
         ]
 
         out["F"] = np.array(objectives, dtype=float)
@@ -341,7 +341,7 @@ if __name__ == "__main__":
     print("# " * 10)
     print("")
     # Settings
-    pop_sizes = [100]  # , 500]
+    pop_sizes = [200]  # , 500]
     algs = ["nsga2", "nsga3", "moead"]
     tasks = [
         "Cobimetinib"
