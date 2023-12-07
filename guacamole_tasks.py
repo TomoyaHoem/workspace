@@ -87,18 +87,13 @@ class Task:
         similarity = TanimotoScoringFunction(
             smiles, fp_type="FCFP4", score_modifier=ClippedScoreModifier(upper_x=0.8)
         )
-        deviation = TanimotoScoringFunction(
-            smiles,
-            fp_type="ECFP6",
-            score_modifier=MinGaussianModifier(mu=0.85, sigma=0.1),
-        )
         tpsa_over_100 = RdkitScoringFunction(
             descriptor=tpsa, score_modifier=MaxGaussianModifier(mu=100, sigma=10)
         )
         logP_scoring = RdkitScoringFunction(
             descriptor=logP, score_modifier=MinGaussianModifier(mu=1, sigma=1)
         )
-        return [similarity, deviation, tpsa_over_100, logP_scoring]
+        return [similarity, tpsa_over_100, logP_scoring]
 
     def osimertinib(self) -> list:
         smiles = "CC(C)(C(=O)O)c1ccc(cc1)C(O)CCCN2CCC(CC2)C(O)(c3ccccc3)c4ccccc4"

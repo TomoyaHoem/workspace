@@ -273,9 +273,9 @@ def main(args: list, mols: pd.DataFrame, aw: AverageProceesor) -> None:
 
     # * III. Store Results
 
-    # rp = ResultProcessor(molecules, results, task, sets, filename)
-    # rp(store_print)
-    # aw.append_results(results)
+    rp = ResultProcessor(molecules, results, task, sets, filename)
+    rp(store_print)
+    aw.append_results(results)
 
 
 def run_alg(molecules, algorithm, alg: str, task: Task):
@@ -341,12 +341,12 @@ if __name__ == "__main__":
     print("# " * 10)
     print("")
     # Settings
-    pop_sizes = [100]  # , 500]
+    pop_sizes = [200]  # , 500]
     algs = ["nsga2", "nsga3", "moead"]
     tasks = [
-        "Cobimetinib"
+        "Cobimetinib",
     ]  # , "Fexofenadine", "Osimertinib", "Pioglitazone", "Ranolazine"]
-    store_print = ""
+    store_print = "-s"
     repeat = REPEAT
     # Read Data
     input_mols = read_data("subset")
@@ -356,11 +356,9 @@ if __name__ == "__main__":
     print("-" * 25)
     print("")
 
-    tracemalloc.start()
-
     for t in tasks:
         for p in pop_sizes:
-            # aw = AverageProceesor(algs, t)
+            aw = AverageProceesor(algs, t)
             for i in range(repeat):
                 filename = (
                     "MOP_Experiment_"
@@ -374,35 +372,28 @@ if __name__ == "__main__":
                     + ".xlsx"
                 )
                 r_count += 1
-                main([algs, filename, store_print, t, p], input_mols, None)  # , aw)
+                main([algs, filename, store_print, t, p], input_mols, aw)
                 print(f"Finished run {r_count}")
                 print("-" * 25)
                 print("")
             print("Storing Averages...")
-            # aw(
-            #     store_print,
-            #     "MOP_Experiment_Averages_"
-            #     + str(i_count)
-            #     + "_"
-            #     + str(repeat)
-            #     + "_"
-            #     + "_".join(algs)
-            #     + "_"
-            #     + str(NUM_ITERATIONS)
-            #     + "_"
-            #     + str(p)
-            #     + ".xlsx",
-            #     repeat,
-            # )
+            aw(
+                store_print,
+                "MOP_Experiment_Averages_"
+                + str(i_count)
+                + "_"
+                + str(repeat)
+                + "_"
+                + "_".join(algs)
+                + "_"
+                + str(NUM_ITERATIONS)
+                + "_"
+                + str(p)
+                + ".xlsx",
+                repeat,
+            )
             i_count += 1
             print("")
-
-    snapshot = tracemalloc.take_snapshot()
-    top_stats = snapshot.statistics("lineno")
-
-    print("[ Top 10 ]")
-    for stat in top_stats[:10]:
-        print(stat)
 
     print("")
     print("# " * 10)
