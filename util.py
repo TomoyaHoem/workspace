@@ -1,3 +1,6 @@
+import gc
+
+
 def r_plot_data(num_iter):
     """Helper function to dynamically adjust running metric plots to number of generations."""
     delta, num_p = 0, 0
@@ -34,3 +37,20 @@ def dominates(a: list, b: list) -> bool:
                 dominate = True
 
     return dominate
+
+
+def dump_garbage():
+    """
+    show us what the garbage is about
+    """
+    # Force collection
+    print("\nGARBAGE:")
+    gc_count = gc.collect()
+    print(gc_count)
+
+    print("\nGARBAGE OBJECTS:")
+    for x in gc.garbage:
+        s = str(x)
+        if len(s) > 80:
+            s = s[:77] + "..."
+        print(type(x), "\n  ", s)

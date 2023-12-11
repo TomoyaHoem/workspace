@@ -1,4 +1,5 @@
 import time
+import gc
 import os
 import sys
 import random
@@ -15,10 +16,10 @@ import selfies as sf
 
 from rdkit import Chem
 from rdkit.Chem import QED
-
 from rdkit.Chem import RDConfig
 
 from guacamole_tasks import Task
+from util import dump_garbage
 
 sys.path.append(os.path.join(RDConfig.RDContribDir, "SA_Score"))
 import sascorer  # type: ignore
@@ -41,8 +42,8 @@ from pymoo.util.ref_dirs import get_reference_directions
 alphabet = sf.get_semantic_robust_alphabet()
 
 SEED = 1
-NUM_ITERATIONS = 100  # 200
-REPEAT = 3  # 10
+NUM_ITERATIONS = 3  # 200
+REPEAT = 1  # 10
 
 
 class SELFIESProblem(ElementwiseProblem):
@@ -136,10 +137,10 @@ class SELFIESMutation(Mutation):
 
         if mut == 1:
             # add only if not too long
-            if len(selfie_split) < 20:
+            if len(selfie_split) < 40:
                 rnd_symbol = random.sample(list(alphabet), 1)[0]
                 rnd_ind = random.randint(0, len(selfie_split) - 1)
-                selfie_split.insert(rnd_symbol, rnd_ind)
+                selfie_split.insert(rnd_ind, rnd_symbol)
         elif mut == 2:
             # replace
             rnd_symbol = random.sample(list(alphabet), 1)[0]
@@ -148,11 +149,13 @@ class SELFIESMutation(Mutation):
             selfie_split[rnd_ind] = rnd_symbol
         else:
             # remove only if not too short
-            if len(selfie_split) > 6:
+            if len(selfie_split) > 3:
                 rnd_ind = random.randint(0, len(selfie_split) - 1)
                 del selfie_split[rnd_ind]
 
-        return "".join(selfie_split)
+        mutated_off = "".join(selfie_split)
+
+        return mutated_off
 
     def _do(self, problem, X, **kwargs):
         # for each individual
@@ -182,7 +185,7 @@ def print_help():
     """
     Arguments: Data Algorithm1 Algorithm2
     """
-    print("")
+    print("ERROR: NOT IMPLEMENTED YET")
 
 
 def main(args: list, mols: pd.DataFrame, aw: AverageProceesor) -> None:
@@ -262,7 +265,6 @@ def main(args: list, mols: pd.DataFrame, aw: AverageProceesor) -> None:
 
     for alg_n, alg in zip(algs, algorithms):
         r = run_alg(molecules, alg, alg_n, task)
-
         # multiply negative objectives by -1 since they were minimized
         # all except at index i = 1 because SA score should remain minimized
         r.F = np.array(
@@ -285,7 +287,7 @@ def run_alg(molecules, algorithm, alg: str, task: Task):
         algorithm,
         ("n_gen", NUM_ITERATIONS),
         # seed=SEED,
-        save_history=True,
+        save_history=False,
         verbose=True,
     )
 
@@ -341,7 +343,7 @@ if __name__ == "__main__":
     print("# " * 10)
     print("")
     # Settings
-    pop_sizes = [200]  # , 500]
+    pop_sizes = [100]  # , 500]
     algs = ["nsga2", "nsga3", "moead"]
     tasks = [
         "Cobimetinib",
@@ -356,6 +358,8 @@ if __name__ == "__main__":
     print("-" * 25)
     print("")
 
+    tracemalloc.start()
+
     for t in tasks:
         for p in pop_sizes:
             aw = AverageProceesor(algs, t)
@@ -369,6 +373,8 @@ if __name__ == "__main__":
                     + str(NUM_ITERATIONS)
                     + "_"
                     + str(p)
+                    + "_"
+                    + t
                     + ".xlsx"
                 )
                 r_count += 1
@@ -389,6 +395,8 @@ if __name__ == "__main__":
                 + str(NUM_ITERATIONS)
                 + "_"
                 + str(p)
+                + "_"
+                + t
                 + ".xlsx",
                 repeat,
             )
@@ -398,3 +406,9 @@ if __name__ == "__main__":
     print("")
     print("# " * 10)
     print("Finished Execution")
+
+    snapshot = tracemalloc.take_snapshot()
+    top_stats = snapshot.statistics("lineno")
+
+    for stat in top_stats[:10]:
+        print(stat)

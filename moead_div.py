@@ -2,6 +2,7 @@ import numpy as np
 from scipy.spatial.distance import cdist
 import random
 import matplotlib.pyplot as plt
+import tracemalloc
 
 import selfies as sf
 from rdkit import Chem
@@ -24,20 +25,15 @@ from rdkit.Chem import rdFingerprintGenerator
 
 
 def not_contains(pop: np.ndarray, off: object) -> bool:
-    sims = []
     offspring = off.X[0]
     offsmile = sf.decoder(offspring)
-    ofp = rdFingerprintGenerator.GetMorganGenerator().GetFingerprint(
-        Chem.MolFromSmiles(offsmile)
-    )
+    morgan_gen = rdFingerprintGenerator.GetMorganGenerator()
+    ofp = morgan_gen.GetFingerprint(Chem.MolFromSmiles(offsmile))
     for i in pop:
         indv = i.X[0]
         psmile = sf.decoder(indv)
-        pfp = rdFingerprintGenerator.GetMorganGenerator().GetFingerprint(
-            Chem.MolFromSmiles(psmile)
-        )
+        pfp = morgan_gen.GetFingerprint(Chem.MolFromSmiles(psmile))
         sim = DataStructs.TanimotoSimilarity(ofp, pfp)
-        sims.append(sim)
         if sim > 0.3:
             return False
 
@@ -148,6 +144,10 @@ class MOEAD(LoopwiseAlgorithm, GeneticAlgorithm):
                 self.mating.do(self.problem, pop, 1, parents=P, n_max_iterations=1)
             )
 
+            # check if neighborhood does not already contain offspring
+            if not_contains(pop[self.neighbors[k]], off) == False:
+                return
+
             # evaluate the offspring
             off = yield off
 
@@ -168,7 +168,6 @@ class MOEAD(LoopwiseAlgorithm, GeneticAlgorithm):
         off_FV = self.decomposition.do(
             off.F[None, :], weights=self.ref_dirs[N, :], ideal_point=self.ideal
         )
-
         # this makes the algorithm to support constraints - not originally proposed though and not tested enough
         # if self.problem.has_constraints():
         #     CV, off_CV = pop[N].get("CV")[:, 0], np.full(len(off_FV), off.CV)
@@ -178,9 +177,10 @@ class MOEAD(LoopwiseAlgorithm, GeneticAlgorithm):
         # get the absolute index in F where offspring is better than the current F (decomposed space)
 
         I = np.where(off_FV < FV)[0]
-        if I.any() and not_contains(pop, off):
-            pop[N[random.choice(I)]] = off
+        # if I.any() and not_contains(pop, off):
+        #     pop[N[random.choice(I)]] = off
         # pop[N[I]] = off
+        pop[N[random.choice(I)]] = off
 
 
 class ParallelMOEAD(MOEAD):

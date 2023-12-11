@@ -38,6 +38,7 @@ def fig_to_im(size: tuple) -> io.BytesIO:
     imgdata = io.BytesIO()
     plt.gcf().savefig(imgdata, format="JPEG", dpi=100)
     plt.clf()
+    plt.close()
     return imgdata
 
 
@@ -140,13 +141,7 @@ def multi_alg_running(pareto_obj: list, histories: list) -> list:
 
     for i in range(len(pareto_obj[0])):
         # merge pareto sets and remove duplicates
-        merged = list(
-            itertools.chain(
-                pareto_obj[0][i].F.tolist(),
-                pareto_obj[1][i].F.tolist(),
-                # pareto_obj[2][i].F,
-            )
-        )
+        merged = list(itertools.chain(*[x[i].F.tolist() for x in pareto_obj]))
         merged.sort()
         merged = list(m for m, _ in itertools.groupby(merged))
         # remove non-dominated
@@ -267,9 +262,10 @@ def multi_similiarty_plot(container: dict) -> io.BytesIO:
     Returns:
         io.ByterIO: Plot in memory buffer.
     """
-    similarity_data = []
-    for _, value in container.items():
+    alg_names, similarity_data = [], []
+    for key, value in container.items():
         # calculate similarity values for each algorithm run
+        alg_names.append(key)
         sim_runs = []
         for res in value[0]:
             sim_run = []
@@ -292,7 +288,9 @@ def multi_similiarty_plot(container: dict) -> io.BytesIO:
     _, ax = plt.subplots()
 
     for i in range(len(similarity_data)):
-        ax.plot(itr, [x[0] for x in similarity_data[i]], color=colors[i])
+        ax.plot(
+            itr, [x[0] for x in similarity_data[i]], label=alg_names[i], color=colors[i]
+        )
         ax.fill_between(
             itr,
             [x[0] + x[1] for x in similarity_data[i]],
@@ -300,5 +298,11 @@ def multi_similiarty_plot(container: dict) -> io.BytesIO:
             color=colors[i],
             alpha=0.1,
         )
+
+    ax.legend()
+
+    ax.set_xlabel("Generation")
+    ax.set_ylabel("Similarity", rotation=0)
+    ax.yaxis.set_label_coords(-0.075, 0.5)
 
     return fig_to_im((15, 10))

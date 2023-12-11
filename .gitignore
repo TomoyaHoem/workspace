@@ -37,3 +37,4 @@ mol*.png
 # pkl files / data
 pkl/*
 *rar
+gc_log.txt
