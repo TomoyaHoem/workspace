@@ -66,7 +66,7 @@ class AverageProceesor:
             results: Pymoo result object for each algorithm run.
         """
         for res in results:
-            curList = self.res_container[res.algorithm.__class__.__name__.lower()]
+            curList = self.res_container[res.name.lower()]
             # append results
             curList[0].append(res)
             # append histories

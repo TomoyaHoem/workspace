@@ -20,6 +20,7 @@ from rdkit.Chem import RDConfig
 
 from guacamole_tasks import Task
 from util import dump_garbage
+from algorithm_result import AlgorithmResult, Alg
 
 sys.path.append(os.path.join(RDConfig.RDContribDir, "SA_Score"))
 import sascorer  # type: ignore
@@ -32,6 +33,7 @@ from moead_div import MOEAD
 
 from pymoo.optimize import minimize
 from pymoo.core.problem import ElementwiseProblem
+from pymoo.core.callback import Callback
 from pymoo.core.sampling import Sampling
 from pymoo.core.crossover import Crossover
 from pymoo.core.mutation import Mutation
@@ -42,8 +44,19 @@ from pymoo.util.ref_dirs import get_reference_directions
 alphabet = sf.get_semantic_robust_alphabet()
 
 SEED = 1
-NUM_ITERATIONS = 3  # 200
-REPEAT = 1  # 10
+NUM_ITERATIONS = 100  # 200
+REPEAT = 3  # 10
+
+
+class SELFIESCallback(Callback):
+    def __init__(self) -> None:
+        super().__init__()
+        self.data["algorithms"] = []
+
+    def notify(self, algorithm):
+        self.data["algorithms"].append(
+            Alg(algorithm.pop, algorithm.n_gen, algorithm.opt.get("F"))
+        )
 
 
 class SELFIESProblem(ElementwiseProblem):
@@ -271,7 +284,10 @@ def main(args: list, mols: pd.DataFrame, aw: AverageProceesor) -> None:
             [[-v if i != 1 else v for i, v in enumerate(indiv)] for indiv in r.F]
         )
 
-        results.append(r)
+        alg_res = AlgorithmResult(
+            alg_n, r.F, r.X, r.algorithm.callback.data["algorithms"]
+        )
+        results.append(alg_res)
 
     # * III. Store Results
 
@@ -286,8 +302,8 @@ def run_alg(molecules, algorithm, alg: str, task: Task):
         SELFIESProblem(selfies=molecules["SELFIES"].to_numpy(), task=task),
         algorithm,
         ("n_gen", NUM_ITERATIONS),
-        # seed=SEED,
         save_history=False,
+        callback=SELFIESCallback(),
         verbose=True,
     )
 
@@ -343,7 +359,7 @@ if __name__ == "__main__":
     print("# " * 10)
     print("")
     # Settings
-    pop_sizes = [100]  # , 500]
+    pop_sizes = [50]  # , 500]
     algs = ["nsga2", "nsga3", "moead"]
     tasks = [
         "Cobimetinib",
@@ -357,8 +373,6 @@ if __name__ == "__main__":
     print("Starting runs...")
     print("-" * 25)
     print("")
-
-    tracemalloc.start()
 
     for t in tasks:
         for p in pop_sizes:
@@ -407,8 +421,10 @@ if __name__ == "__main__":
     print("# " * 10)
     print("Finished Execution")
 
-    snapshot = tracemalloc.take_snapshot()
-    top_stats = snapshot.statistics("lineno")
+    # # memory profiling
+    # tracemalloc.start()
+    # snapshot = tracemalloc.take_snapshot()
+    # top_stats = snapshot.statistics("lineno")
 
-    for stat in top_stats[:10]:
-        print(stat)
+    # for stat in top_stats[:10]:
+    #     print(stat)

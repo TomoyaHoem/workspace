@@ -55,7 +55,7 @@ def single_pc_plot(res: list, tasks: list[str]) -> io.BytesIO:
         io.BytesIO: Plot in memory buffer.
     """
     df = pd.DataFrame(res.F, columns=tasks)
-    df["Algorithm"] = res.algorithm.__class__.__name__
+    df["Algorithm"] = res.name
 
     pd.plotting.parallel_coordinates(df, class_column="Algorithm", cols=tasks)
 
@@ -76,7 +76,7 @@ def multi_pc_plot(results: list, tasks: list[str]) -> io.BytesIO:
     dfs = []
     for res in results:
         res_df = pd.DataFrame(res.F, columns=tasks)
-        res_df["Algorithm"] = res.algorithm.__class__.__name__
+        res_df["Algorithm"] = res.name
         dfs.append(res_df)
     df = pd.concat(dfs)
 
@@ -162,7 +162,9 @@ def multi_alg_running(pareto_obj: list, histories: list) -> list:
         c_N = normalize(c_F, c_ideal, c_nadir)
         # normalize all previous generations with respect to current ideal and nadir for each alg
         for j in range(len(pareto_obj)):
-            N = [normalize(p.opt.get("F"), c_ideal, c_nadir) for p in histories[j][i]]
+            N = [
+                normalize(p.opt, c_ideal, c_nadir) for p in histories[j][i]
+            ]  # p.opt.get("F")
             # calculate IGD
             delta_f = [IGD(c_N).do(N[k]) for k in range(len(N))]
             # append

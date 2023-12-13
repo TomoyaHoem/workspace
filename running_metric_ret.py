@@ -25,7 +25,7 @@ class RunningMetric(Callback):
     def update(self, algorithm):
         history = self.history
 
-        F = algorithm.opt.get("F")
+        F = algorithm.opt  # .get("F")
         c_F, c_ideal, c_nadir = F, F.min(axis=0), F.max(axis=0)
 
         # append the current optimum to the history

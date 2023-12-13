@@ -109,7 +109,7 @@ class ResultProcessor:
         for res in self.results:
             algorithm_data = []
             # algorithm name
-            algorithm_data.append(res.algorithm.__class__.__name__ + " Data")
+            algorithm_data.append(res.name + " Data")
             # initial population
             algorithm_data.append(initial_pop)
             # top N individuals
@@ -154,7 +154,7 @@ class ResultProcessor:
         # Objectives + |pareto_set|
         algs, obj, pareto = [], [], []
         for res in self.results:
-            algs.append(res.algorithm.__class__.__name__)
+            algs.append(res.name)
             obj.append(self.objective_statistics(res))
             pareto.append(len(res.F[:, 0]))
         comp_data.append(algs)

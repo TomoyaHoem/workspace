@@ -34,7 +34,7 @@ def not_contains(pop: np.ndarray, off: object) -> bool:
         psmile = sf.decoder(indv)
         pfp = morgan_gen.GetFingerprint(Chem.MolFromSmiles(psmile))
         sim = DataStructs.TanimotoSimilarity(ofp, pfp)
-        if sim > 0.3:
+        if sim > 0.4:
             return False
 
     return True
@@ -180,7 +180,8 @@ class MOEAD(LoopwiseAlgorithm, GeneticAlgorithm):
         # if I.any() and not_contains(pop, off):
         #     pop[N[random.choice(I)]] = off
         # pop[N[I]] = off
-        pop[N[random.choice(I)]] = off
+        if I.any():
+            pop[N[random.choice(I)]] = off
 
 
 class ParallelMOEAD(MOEAD):
