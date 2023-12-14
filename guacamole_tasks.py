@@ -83,19 +83,6 @@ class Task:
         ]
 
     def fexofenadine(self) -> list:
-        smiles = "COc1cc(N(C)CCN(C)C)c(NC(=O)C=C)cc1Nc2nccc(n2)c3cn(C)c4ccccc34"
-        similarity = TanimotoScoringFunction(
-            smiles, fp_type="FCFP4", score_modifier=ClippedScoreModifier(upper_x=0.8)
-        )
-        tpsa_over_100 = RdkitScoringFunction(
-            descriptor=tpsa, score_modifier=MaxGaussianModifier(mu=100, sigma=10)
-        )
-        logP_scoring = RdkitScoringFunction(
-            descriptor=logP, score_modifier=MinGaussianModifier(mu=1, sigma=1)
-        )
-        return [similarity, tpsa_over_100, logP_scoring]
-
-    def osimertinib(self) -> list:
         smiles = "CC(C)(C(=O)O)c1ccc(cc1)C(O)CCCN2CCC(CC2)C(O)(c3ccccc3)c4ccccc4"
         similarity = TanimotoScoringFunction(
             smiles, fp_type="AP", score_modifier=ClippedScoreModifier(upper_x=0.8)
@@ -107,6 +94,24 @@ class Task:
             descriptor=logP, score_modifier=MinGaussianModifier(mu=4, sigma=1)
         )
         return [similarity, tpsa_over_90, logP_under_4]
+
+    def osimertinib(self) -> list:
+        smiles = "COc1cc(N(C)CCN(C)C)c(NC(=O)C=C)cc1Nc2nccc(n2)c3cn(C)c4ccccc34"
+        similarity = TanimotoScoringFunction(
+            smiles, fp_type="FCFP4", score_modifier=ClippedScoreModifier(upper_x=0.8)
+        )
+        deviation = TanimotoScoringFunction(
+            smiles,
+            fp_type="ECFP6",
+            score_modifier=MinGaussianModifier(mu=0.85, sigma=0.1),
+        )
+        tpsa_over_100 = RdkitScoringFunction(
+            descriptor=tpsa, score_modifier=MaxGaussianModifier(mu=100, sigma=10)
+        )
+        logP_scoring = RdkitScoringFunction(
+            descriptor=logP, score_modifier=MinGaussianModifier(mu=1, sigma=1)
+        )
+        return [similarity, deviation, tpsa_over_100, logP_scoring]
 
     def pioglitazone(self) -> list:
         smiles = "O=C1NC(=O)SC1Cc3ccc(OCCc2ncc(cc2)CC)cc3"

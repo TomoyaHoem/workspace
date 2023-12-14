@@ -189,6 +189,8 @@ def write_single_results(
 
         # VII. Filler
         last += 11
+        if last < 100:
+            last = 100
         worksheet.conditional_format(
             "A1:AB" + str(last),
             {
