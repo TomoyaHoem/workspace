@@ -45,8 +45,8 @@ from pymoo.util.ref_dirs import get_reference_directions
 alphabet = sf.get_semantic_robust_alphabet()
 
 SEED = 1
-NUM_ITERATIONS = 5  # 200
-REPEAT = 1  # 10
+NUM_ITERATIONS = 200
+REPEAT = 10
 
 
 class SELFIESCallback(Callback):
@@ -285,10 +285,6 @@ def main(args: list, mols: pd.DataFrame, aw: AverageProceesor) -> None:
             [[-v if i != 1 else v for i, v in enumerate(indiv)] for indiv in r.F]
         )
 
-        if alg_n == "moead":
-            for a in r.algorithm.callback.data["algorithms"]:
-                print(a.pop)
-
         alg_res = AlgorithmResult(
             alg_n, r.F, r.X, r.algorithm.callback.data["algorithms"]
         )
@@ -364,11 +360,9 @@ if __name__ == "__main__":
     print("# " * 10)
     print("")
     # Settings
-    pop_sizes = [5]  # , 500]
+    pop_sizes = [100, 500]
     algs = ["nsga2", "nsga3", "moead"]
-    tasks = [
-        "Cobimetinib",
-    ]  # , "Fexofenadine", "Osimertinib", "Pioglitazone", "Ranolazine"]
+    tasks = ["Cobimetinib", "Fexofenadine", "Osimertinib", "Pioglitazone", "Ranolazine"]
     store_print = "-s"
     repeat = REPEAT
     # Read Data
