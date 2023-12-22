@@ -184,15 +184,21 @@ def write_single_results(
         # VI. Internal similarity
         worksheet.merge_range("M75:X75", "INTERNAL SIMILARITY", formats["header"])
         worksheet.merge_range("M76:X76", ".", formats["img"])
-        # Add running last
+
         worksheet.insert_image("M76", "", {"image_data": alg_data[7]})
 
-        # VII. Filler
+        # VII. Pareto plot
+        worksheet.merge_range("M100:X100", "Pareto plot", formats["header"])
+        worksheet.merge_range("M101:X101", ".", formats["img"])
+
+        worksheet.insert_image("M101", "", {"image_data": alg_data[8]})
+
+        # VIII. Filler
         last += 11
-        if last < 100:
-            last = 100
+        if last < 125:
+            last = 125
         worksheet.conditional_format(
-            "A1:AB" + str(last),
+            "A1:AQ" + str(last),
             {
                 "type": "blanks",
                 "format": formats["filler"],
@@ -228,8 +234,14 @@ def write_single_results(
                 11, 13 + (i * 3), 12, 15 + (i * 3), p, formats["pareto"]
             )
 
+        # Pareto plot
+        worksheet.merge_range("B24:K24", "Pareto plot", formats["header"])
+        worksheet.merge_range("B25:K25", ".", formats["img"])
+
+        worksheet.insert_image("B25", "", {"image_data": comp_data[4]})
+
         worksheet.conditional_format(
-            "A1:Y44",
+            "A1:Y55",
             {
                 "type": "blanks",
                 "format": formats["filler"],

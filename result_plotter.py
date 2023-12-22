@@ -5,7 +5,17 @@ import pandas as pd
 import selfies as sf
 import matplotlib.pyplot as plt
 
-from util import r_plot_data, dominates
+from rdkit import Chem
+from rdkit.Chem import Draw
+from matplotlib.offsetbox import AnnotationBbox, OffsetImage
+
+from util import (
+    r_plot_data,
+    dominates,
+    non_dominated,
+    split_string_lines,
+    transparent_colors,
+)
 from running_metric_ret import RunningMetricAnimation
 from extended_similarity import internal_similarity
 
@@ -13,6 +23,11 @@ from pymoo.indicators.igd import IGD
 from pymoo.util.normalization import normalize
 
 colors = ["#FF0000", "#00FF0A", "#383FFF"]
+colors_colb = [(216, 27, 96), (0, 77, 64), (30, 136, 229)]
+colors_colb_rgb = [tuple(c / 255 for c in color) for color in colors_colb]
+colors_transparent = [tuple(c / 255 for c in color) + (0.2,) for color in colors_colb]
+markers = ["s", "o", "*"]
+sizes = [80, 60, 40]
 
 
 # https://stackoverflow.com/questions/14708695/specify-figure-size-in-centimeter-in-matplotlib
@@ -57,7 +72,11 @@ def single_pc_plot(res: list, tasks: list[str]) -> io.BytesIO:
     df = pd.DataFrame(res.F, columns=tasks)
     df["Algorithm"] = res.name
 
-    pd.plotting.parallel_coordinates(df, class_column="Algorithm", cols=tasks)
+    ax = pd.plotting.parallel_coordinates(
+        df, class_column="Algorithm", cols=tasks, color=colors_transparent[1]
+    )
+    ax.get_legend().remove()
+    ax.set_ylim(0, 1.1)
 
     return fig_to_im((16, 10))
 
@@ -80,7 +99,12 @@ def multi_pc_plot(results: list, tasks: list[str]) -> io.BytesIO:
         dfs.append(res_df)
     df = pd.concat(dfs)
 
-    pd.plotting.parallel_coordinates(df, class_column="Algorithm", cols=tasks)
+    ax = pd.plotting.parallel_coordinates(
+        df, class_column="Algorithm", cols=tasks, color=colors_colb_rgb
+    )
+    # for i, leg in enumerate(ax.get_legend().legend_handles):
+    #     leg.set_color(colors_colb_rgb[i])
+    ax.set_ylim(0, 1.1)
     return fig_to_im((16, 10))
 
 
@@ -150,9 +174,10 @@ def multi_alg_running(pareto_obj: list, histories: list) -> list:
             if dominates(a, b):
                 # print("true")
                 merged.remove(b)
-        # reverse objectives for IGD calc
+        # reverse objectives and scale SA to [1-10] for IGD calc (denormalized_d = normalized_d * (max_d - min_d) + min_d)
         merged = [
-            [x * -1 if i != 1 else x for i, x in enumerate(inner)] for inner in merged
+            [x * -1 if i != 1 else 10 - (x * (10 - 1) + 1) for i, x in enumerate(inner)]
+            for inner in merged
         ]
         merged = np.array(merged)
         # get ideal and nadir
@@ -250,6 +275,7 @@ def similarity_plot(res: list) -> io.BytesIO:
     iterations = range(1, len(similarities) + 1, 1)
 
     plt.plot(iterations, similarities)
+    plt.ylim(0.4, 0.9)
 
     return fig_to_im((16, 10))
 
@@ -301,6 +327,7 @@ def multi_similiarty_plot(container: dict) -> io.BytesIO:
             alpha=0.1,
         )
 
+    ax.set_ylim(0.4, 0.9)
     ax.legend()
 
     ax.set_xlabel("Generation")
@@ -308,3 +335,119 @@ def multi_similiarty_plot(container: dict) -> io.BytesIO:
     ax.yaxis.set_label_coords(-0.075, 0.5)
 
     return fig_to_im((15, 10))
+
+
+def single_pareto_plot(res: list) -> io.BytesIO:
+    """
+    Function to plot pareto plot of single algorithm result using two objectives as specified.
+    Highlight pareto front given two objectives.
+
+    Parameters:
+        res: Pymoo single algorithm result.
+
+    Returns:
+        io.ByterIO: Plot in memory buffer.
+    """
+    # determine non-dominated set
+    nds = non_dominated(res.F[:, :2])
+    # plot population and non-dominated set
+    pareto = np.array([res.F[i] for i in nds])
+    pop = np.array([idv for i, idv in enumerate(res.F) if i not in nds])
+    _, ax = plt.subplots()
+    ax.scatter(pop[:, 0], pop[:, 1], color=colors_colb_rgb[1])
+    ax.scatter(pareto[:, 0], pareto[:, 1], color=colors_colb_rgb[0], edgecolor="black")
+    ax.set_ylim(0, 1.0)
+    ax.set_xlim(0, 1.0)
+    ax.set_xlabel("SA score")
+    ax.set_ylabel("QED", rotation=0)
+    ax.yaxis.set_label_coords(-0.075, 0.5)
+
+    # annotate non-dominated set with mol image and SMILES string
+    # 1. Sort non-dominated set for QED in descending order
+    pareto_set = [(res.X[i], res.F[i]) for i in nds]
+    pareto_sorted = sorted(pareto_set, key=lambda x: x[1][0], reverse=False)
+    # 2. Annotate pareto front with molecule representation
+    plt.subplots_adjust(left=0.04, right=0.4)
+    for i, nds in enumerate(pareto_sorted):
+        mol_smiles = sf.decoder(nds[0][0])
+        mol_img = Draw.MolToImage(Chem.MolFromSmiles(mol_smiles))
+        x_offset = int(i / 4) * 0.42
+        # datapoints
+        plt.annotate(
+            text=str(i + 1),
+            xy=(nds[1][0], nds[1][1]),
+            xytext=(3, 3),
+            textcoords="offset points",
+            annotation_clip=False,
+        )
+        # mol image
+        image_arr = np.array(mol_img)
+        imagebox = OffsetImage(image_arr, zoom=0.28)
+        ab = AnnotationBbox(
+            imagebox,
+            xy=(nds[1][0], nds[1][1]),
+            xybox=(1.16 + x_offset, 0.95 - (i % 4 * 0.3)),
+        )
+        ax.add_artist(ab)
+        # numbering
+        plt.annotate(
+            text=str(i + 1) + ".",
+            xy=(nds[1][0], nds[1][1]),
+            xytext=(1.04 + x_offset, 0.95 - (i % 4 * 0.3)),
+            annotation_clip=False,
+        )
+        # smiles
+        plt.annotate(
+            text=split_string_lines(mol_smiles, 12),
+            xy=(nds[1][0], nds[1][1]),
+            xytext=(1.26 + x_offset, 0.95 + 0.08 - (i % 4 * 0.3)),
+            annotation_clip=False,
+            va="top",
+        )
+
+    return fig_to_im((50, 15))
+
+
+def multi_pareto_plot(results: list) -> io.BytesIO:
+    """
+    Function to plot pareto plot for multiple algorithm results using two objectives as specified.
+    Highlight pareto front given two objectives.
+
+    Parameters:
+        results: Pymoo multi algorithm result.
+
+    Returns:
+        io.ByterIO: Plot in memory buffer.
+    """
+    _, ax = plt.subplots()
+
+    for i, res in enumerate(results):
+        nds = non_dominated(res.F[:, :2])
+        # plot population and non-dominated set
+        pareto = np.array([res.F[i] for i in nds])
+        pop = np.array([idv for i, idv in enumerate(res.F) if i not in nds])
+        ax.scatter(
+            pop[:, 0],
+            pop[:, 1],
+            color=transparent_colors(0.5)[i],
+            label=res.name,
+            marker=markers[i],
+        )
+        ax.scatter(
+            pareto[:, 0],
+            pareto[:, 1],
+            color=transparent_colors(0.8)[i],
+            edgecolor=(0, 0, 0, 0.5),
+            label=res.name + " pareto",
+            s=sizes[i],
+            marker=markers[i],
+        )
+
+    ax.legend(loc="lower left")
+    # ax.set_ylim(0, 1.0)
+    # ax.set_xlim(0, 1.0)
+    ax.set_xlabel("SA score")
+    ax.set_ylabel("QED", rotation=0)
+    ax.yaxis.set_label_coords(-0.075, 0.5)
+
+    return fig_to_im((20, 15))

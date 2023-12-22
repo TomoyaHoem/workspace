@@ -51,7 +51,7 @@ class Task:
             self.num_obj = 2 + 4
             self.objectives += ["AP", "LogP", "TPSA", "FC"]
         else:
-            print(f"ERROR: NO VALID TASK PROVIDED, input was {self.task}")
+            print(f"ERROR: NO VALID TASK PROVIDED, input was {task}")
 
     def __call__(self) -> list:
         return self.obj_fun

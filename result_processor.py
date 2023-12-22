@@ -9,6 +9,8 @@ from result_plotter import (
     multi_pc_plot,
     single_running_plot,
     similarity_plot,
+    single_pareto_plot,
+    multi_pareto_plot,
 )
 
 
@@ -93,7 +95,7 @@ class ResultProcessor:
 
     def top_n_individuals(self, res: list) -> list[str]:
         """Helper function that returns 100 or, if less, all availalbe best individuals"""
-        top = res.X[np.argsort(res.F[:, 0])].tolist()
+        top = res.X.tolist()
         n = len(top) if len(top) < 100 else 100
         topN = random.sample(top, n)
         return topN
@@ -118,13 +120,15 @@ class ResultProcessor:
             # settings
             algorithm_data.append(self.settings)
             # pareto set cardinality
-            algorithm_data.append(len(topN))
+            algorithm_data.append(len(res.F))
             # parallel coordinates objective plot
             algorithm_data.append(single_pc_plot(res, self.task.objectives))
             # running plots
             algorithm_data.append(single_running_plot(res, self.settings["N_Gen"]))
             # internal similarity plot
             algorithm_data.append(similarity_plot(res))
+            # pareto plot
+            algorithm_data.append(single_pareto_plot(res))
             # append to data
             self.data.append(algorithm_data)
 
@@ -160,4 +164,5 @@ class ResultProcessor:
         comp_data.append(algs)
         comp_data.append(obj)
         comp_data.append(pareto)
+        comp_data.append(multi_pareto_plot(self.results))
         return comp_data

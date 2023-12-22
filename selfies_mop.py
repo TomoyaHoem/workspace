@@ -20,7 +20,7 @@ from rdkit.Chem import QED
 from rdkit.Chem import RDConfig
 
 from guacamole_tasks import Task
-from util import dump_garbage
+from util import dump_garbage, normalize_sa
 from algorithm_result import AlgorithmResult, Alg
 
 sys.path.append(os.path.join(RDConfig.RDContribDir, "SA_Score"))
@@ -39,14 +39,18 @@ from pymoo.core.sampling import Sampling
 from pymoo.core.crossover import Crossover
 from pymoo.core.mutation import Mutation
 from pymoo.core.duplicate import ElementwiseDuplicateElimination
+
+from pymoo.visualization.scatter import Scatter
 from pymoo.util.ref_dirs import get_reference_directions
 
 
 alphabet = sf.get_semantic_robust_alphabet()
 
 SEED = 1
-NUM_ITERATIONS = 200
-REPEAT = 10
+NUM_ITERATIONS = 100
+REPEAT = 1
+
+# from extended_similarity import internal_similarity
 
 
 class SELFIESCallback(Callback):
@@ -192,14 +196,7 @@ class SELFIESMutation(Mutation):
 class SELFIESDuplicateElimination(ElementwiseDuplicateElimination):
     def is_equal(self, a, b):
         return a.X[0] == b.X[0]
-
-
-# TODO: fix
-def print_help():
-    """
-    Arguments: Data Algorithm1 Algorithm2
-    """
-    print("ERROR: NOT IMPLEMENTED YET")
+        # return sf.decoder(a.X[0]) == sf.decoder(b.X[0])
 
 
 def main(args: list, mols: pd.DataFrame, aw: AverageProceesor) -> None:
@@ -284,10 +281,15 @@ def main(args: list, mols: pd.DataFrame, aw: AverageProceesor) -> None:
         r.F = np.array(
             [[-v if i != 1 else v for i, v in enumerate(indiv)] for indiv in r.F]
         )
+        # normalize SA score to [0-1]
+        normalize_sa(r.F)
 
         alg_res = AlgorithmResult(
             alg_n, r.F, r.X, r.algorithm.callback.data["algorithms"]
         )
+
+        # Scatter().add(r.F).show()
+
         results.append(alg_res)
 
     # * III. Store Results
@@ -360,9 +362,11 @@ if __name__ == "__main__":
     print("# " * 10)
     print("")
     # Settings
-    pop_sizes = [100, 500]
+    pop_sizes = [100]  # , 500]
     algs = ["nsga2", "nsga3", "moead"]
-    tasks = ["Cobimetinib", "Fexofenadine", "Osimertinib", "Pioglitazone", "Ranolazine"]
+    tasks = [
+        "Cobimetinib"
+    ]  # "Cobimetinib", "Fexofenadine", "Osimertinib", "Pioglitazone", "Ranolazine"]
     store_print = "-s"
     repeat = REPEAT
     # Read Data

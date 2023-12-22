@@ -23,6 +23,8 @@ from pymoo.util.reference_direction import default_ref_dirs
 
 from rdkit.Chem import rdFingerprintGenerator
 
+MOEAD_SIM_TRESHOLD = 0.5
+
 
 def not_contains(pop: np.ndarray, off: object) -> bool:
     offspring = off.X[0]
@@ -34,7 +36,7 @@ def not_contains(pop: np.ndarray, off: object) -> bool:
         psmile = sf.decoder(indv)
         pfp = morgan_gen.GetFingerprint(Chem.MolFromSmiles(psmile))
         sim = DataStructs.TanimotoSimilarity(ofp, pfp)
-        if sim > 0.4:
+        if sim > MOEAD_SIM_TRESHOLD:
             return False
 
     return True
