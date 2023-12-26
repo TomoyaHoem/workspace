@@ -351,10 +351,26 @@ def single_pareto_plot(res: list) -> io.BytesIO:
     # determine non-dominated set
     nds = non_dominated(res.F[:, :2])
     # plot population and non-dominated set
-    pareto = np.array([res.F[i] for i in nds])
-    pop = np.array([idv for i, idv in enumerate(res.F) if i not in nds])
     _, ax = plt.subplots()
-    ax.scatter(pop[:, 0], pop[:, 1], color=colors_colb_rgb[1])
+    split = []
+    pareto = np.array([res.F[i] for i in nds])
+    if len(nds) < 16:
+        remaining = 16 - len(nds) if len(res.F) > 15 else len(res.F) - len(nds)
+        sample_set = [i for i in range(len(res.F)) if i not in nds]
+        split = list(np.random.choice(sample_set, remaining, replace=False))
+        pop_split = np.array([res.F[i] for i in split])
+        pop = np.array([idv for i, idv in enumerate(res.F) if i not in nds + split])
+        if len(pop) > 0:
+            ax.scatter(pop[:, 0], pop[:, 1], color=colors_colb_rgb[1])
+        ax.scatter(
+            pop_split[:, 0],
+            pop_split[:, 1],
+            color=colors_colb_rgb[2],
+            edgecolors="black",
+        )
+    else:
+        pop = np.array([idv for i, idv in enumerate(res.F) if i not in nds])
+        ax.scatter(pop[:, 0], pop[:, 1], color=colors_colb_rgb[1])
     ax.scatter(pareto[:, 0], pareto[:, 1], color=colors_colb_rgb[0], edgecolor="black")
     ax.set_ylim(0, 1.0)
     ax.set_xlim(0, 1.0)
@@ -364,19 +380,23 @@ def single_pareto_plot(res: list) -> io.BytesIO:
 
     # annotate non-dominated set with mol image and SMILES string
     # 1. Sort non-dominated set for QED in descending order
+
     pareto_set = [(res.X[i], res.F[i]) for i in nds]
     pareto_sorted = sorted(pareto_set, key=lambda x: x[1][0], reverse=False)
+    for i in split:
+        pareto_sorted.append((res.X[i], res.F[i]))
     # 2. Annotate pareto front with molecule representation
     plt.subplots_adjust(left=0.04, right=0.4)
-    for i, nds in enumerate(pareto_sorted):
-        mol_smiles = sf.decoder(nds[0][0])
+    for i, nd in enumerate(pareto_sorted):
+        mol_smiles = sf.decoder(nd[0][0])
         mol_img = Draw.MolToImage(Chem.MolFromSmiles(mol_smiles))
-        x_offset = int(i / 4) * 0.42
+        x_offset = int(i / 4) * 0.4
         # datapoints
+        offset = (3, 3) if i < len(nds) else (-12, -12)
         plt.annotate(
             text=str(i + 1),
-            xy=(nds[1][0], nds[1][1]),
-            xytext=(3, 3),
+            xy=(nd[1][0], nd[1][1]),
+            xytext=offset,
             textcoords="offset points",
             annotation_clip=False,
         )
@@ -385,27 +405,27 @@ def single_pareto_plot(res: list) -> io.BytesIO:
         imagebox = OffsetImage(image_arr, zoom=0.28)
         ab = AnnotationBbox(
             imagebox,
-            xy=(nds[1][0], nds[1][1]),
+            xy=(nd[1][0], nd[1][1]),
             xybox=(1.16 + x_offset, 0.95 - (i % 4 * 0.3)),
         )
         ax.add_artist(ab)
         # numbering
         plt.annotate(
             text=str(i + 1) + ".",
-            xy=(nds[1][0], nds[1][1]),
+            xy=(nd[1][0], nd[1][1]),
             xytext=(1.04 + x_offset, 0.95 - (i % 4 * 0.3)),
             annotation_clip=False,
         )
         # smiles
         plt.annotate(
             text=split_string_lines(mol_smiles, 12),
-            xy=(nds[1][0], nds[1][1]),
+            xy=(nd[1][0], nd[1][1]),
             xytext=(1.26 + x_offset, 0.95 + 0.08 - (i % 4 * 0.3)),
             annotation_clip=False,
             va="top",
         )
 
-    return fig_to_im((50, 15))
+    return fig_to_im((55, 15))
 
 
 def multi_pareto_plot(results: list) -> io.BytesIO:

@@ -47,8 +47,8 @@ from pymoo.util.ref_dirs import get_reference_directions
 alphabet = sf.get_semantic_robust_alphabet()
 
 SEED = 1
-NUM_ITERATIONS = 100
-REPEAT = 1
+NUM_ITERATIONS = 200
+REPEAT = 10
 
 # from extended_similarity import internal_similarity
 
@@ -362,10 +362,14 @@ if __name__ == "__main__":
     print("# " * 10)
     print("")
     # Settings
-    pop_sizes = [100]  # , 500]
+    pop_sizes = [100, 500]
     algs = ["nsga2", "nsga3", "moead"]
     tasks = [
-        "Cobimetinib"
+        "Cobimetinib",
+        "Fexofenadine",
+        "Osimertinib",
+        "Pioglitazone",
+        "Ranolazine",
     ]  # "Cobimetinib", "Fexofenadine", "Osimertinib", "Pioglitazone", "Ranolazine"]
     store_print = "-s"
     repeat = REPEAT

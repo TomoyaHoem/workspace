@@ -198,7 +198,7 @@ def write_single_results(
         if last < 125:
             last = 125
         worksheet.conditional_format(
-            "A1:AQ" + str(last),
+            "A1:AT" + str(last),
             {
                 "type": "blanks",
                 "format": formats["filler"],
