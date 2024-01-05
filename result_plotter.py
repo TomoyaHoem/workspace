@@ -361,17 +361,17 @@ def single_pareto_plot(res: list) -> io.BytesIO:
         pop_split = np.array([res.F[i] for i in split])
         pop = np.array([idv for i, idv in enumerate(res.F) if i not in nds + split])
         if len(pop) > 0:
-            ax.scatter(pop[:, 0], pop[:, 1], color=colors_colb_rgb[1])
+            ax.scatter(pop[:, 1], pop[:, 0], color=colors_colb_rgb[1])
         ax.scatter(
-            pop_split[:, 0],
             pop_split[:, 1],
+            pop_split[:, 0],
             color=colors_colb_rgb[2],
             edgecolors="black",
         )
     else:
         pop = np.array([idv for i, idv in enumerate(res.F) if i not in nds])
-        ax.scatter(pop[:, 0], pop[:, 1], color=colors_colb_rgb[1])
-    ax.scatter(pareto[:, 0], pareto[:, 1], color=colors_colb_rgb[0], edgecolor="black")
+        ax.scatter(pop[:, 1], pop[:, 0], color=colors_colb_rgb[1])
+    ax.scatter(pareto[:, 1], pareto[:, 0], color=colors_colb_rgb[0], edgecolor="black")
     ax.set_ylim(0, 1.0)
     ax.set_xlim(0, 1.0)
     ax.set_xlabel("SA score")
@@ -447,15 +447,15 @@ def multi_pareto_plot(results: list) -> io.BytesIO:
         pareto = np.array([res.F[i] for i in nds])
         pop = np.array([idv for i, idv in enumerate(res.F) if i not in nds])
         ax.scatter(
-            pop[:, 0],
             pop[:, 1],
+            pop[:, 0],
             color=transparent_colors(0.5)[i],
             label=res.name,
             marker=markers[i],
         )
         ax.scatter(
-            pareto[:, 0],
             pareto[:, 1],
+            pareto[:, 0],
             color=transparent_colors(0.8)[i],
             edgecolor=(0, 0, 0, 0.5),
             label=res.name + " pareto",
