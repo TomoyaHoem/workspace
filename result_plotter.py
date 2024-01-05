@@ -395,7 +395,7 @@ def single_pareto_plot(res: list) -> io.BytesIO:
         offset = (3, 3) if i < len(nds) else (-12, -12)
         plt.annotate(
             text=str(i + 1),
-            xy=(nd[1][0], nd[1][1]),
+            xy=(nd[1][1], nd[1][0]),
             xytext=offset,
             textcoords="offset points",
             annotation_clip=False,
@@ -405,21 +405,21 @@ def single_pareto_plot(res: list) -> io.BytesIO:
         imagebox = OffsetImage(image_arr, zoom=0.28)
         ab = AnnotationBbox(
             imagebox,
-            xy=(nd[1][0], nd[1][1]),
+            xy=(nd[1][1], nd[1][0]),
             xybox=(1.16 + x_offset, 0.95 - (i % 4 * 0.3)),
         )
         ax.add_artist(ab)
         # numbering
         plt.annotate(
             text=str(i + 1) + ".",
-            xy=(nd[1][0], nd[1][1]),
+            xy=(nd[1][1], nd[1][0]),
             xytext=(1.04 + x_offset, 0.95 - (i % 4 * 0.3)),
             annotation_clip=False,
         )
         # smiles
         plt.annotate(
             text=split_string_lines(mol_smiles, 12),
-            xy=(nd[1][0], nd[1][1]),
+            xy=(nd[1][1], nd[1][0]),
             xytext=(1.26 + x_offset, 0.95 + 0.08 - (i % 4 * 0.3)),
             annotation_clip=False,
             va="top",
