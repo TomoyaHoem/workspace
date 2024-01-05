@@ -275,7 +275,7 @@ def similarity_plot(res: list) -> io.BytesIO:
     iterations = range(1, len(similarities) + 1, 1)
 
     plt.plot(iterations, similarities)
-    plt.ylim(0.4, 0.9)
+    plt.ylim(0.3, 1.0)
 
     return fig_to_im((16, 10))
 
@@ -327,7 +327,7 @@ def multi_similiarty_plot(container: dict) -> io.BytesIO:
             alpha=0.1,
         )
 
-    ax.set_ylim(0.4, 0.9)
+    ax.set_ylim(0.3, 1.0)
     ax.legend()
 
     ax.set_xlabel("Generation")
