@@ -79,3 +79,13 @@ def non_dominated(fitness: list) -> list:
 def transparent_colors(alpha: float):
     colors_colb = [(216, 27, 96), (0, 77, 64), (30, 136, 229)]
     return [tuple(c / 255 for c in color) + (alpha,) for color in colors_colb]
+
+
+def algorithm_names(alg: str):
+    if alg == "nsga2":
+        return "NSGA-II"
+    if alg == "nsga3":
+        return "NSGA-III"
+    if alg == "moead":
+        return "MOEA/D"
+    return ""

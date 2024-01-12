@@ -15,6 +15,7 @@ from util import (
     non_dominated,
     split_string_lines,
     transparent_colors,
+    algorithm_names,
 )
 from running_metric_ret import RunningMetricAnimation
 from extended_similarity import internal_similarity
@@ -22,9 +23,13 @@ from extended_similarity import internal_similarity
 from pymoo.indicators.igd import IGD
 from pymoo.util.normalization import normalize
 
-colors = ["#FF0000", "#00FF0A", "#383FFF"]
+# https://davidmathlogic.com/colorblind/#%23D81B60-%231E88E5-%23FFC107-%23004D40
+colors = ["#D81B60", "#004D40", "#1E88E5"]
 colors_colb = [(216, 27, 96), (0, 77, 64), (30, 136, 229)]
 colors_colb_rgb = [tuple(c / 255 for c in color) for color in colors_colb]
+colors__slightly_transparent = [
+    tuple(c / 255 for c in color) + (0.8,) for color in colors_colb
+]
 colors_transparent = [tuple(c / 255 for c in color) + (0.2,) for color in colors_colb]
 markers = ["s", "o", "*"]
 sizes = [80, 60, 40]
@@ -95,12 +100,12 @@ def multi_pc_plot(results: list, tasks: list[str]) -> io.BytesIO:
     dfs = []
     for res in results:
         res_df = pd.DataFrame(res.F, columns=tasks)
-        res_df["Algorithm"] = res.name
+        res_df["Algorithm"] = algorithm_names(res.name)
         dfs.append(res_df)
     df = pd.concat(dfs)
 
     ax = pd.plotting.parallel_coordinates(
-        df, class_column="Algorithm", cols=tasks, color=colors_colb_rgb
+        df, class_column="Algorithm", cols=tasks, color=colors__slightly_transparent
     )
     # for i, leg in enumerate(ax.get_legend().legend_handles):
     #     leg.set_color(colors_colb_rgb[i])
@@ -234,7 +239,7 @@ def multi_running_plot(container: dict) -> io.BytesIO:
         ax.plot(
             gens,
             [x[0] for x in average_and_std[i]],
-            label=alg_names[i],
+            label=algorithm_names(alg_names[i]),
             alpha=0.9,
             linewidth=3,
             color=colors[i],
@@ -317,7 +322,11 @@ def multi_similiarty_plot(container: dict) -> io.BytesIO:
 
     for i in range(len(similarity_data)):
         ax.plot(
-            itr, [x[0] for x in similarity_data[i]], label=alg_names[i], color=colors[i]
+            itr,
+            [x[0] for x in similarity_data[i]],
+            label=algorithm_names(alg_names[i]),
+            linewidth=2,
+            color=colors[i],
         )
         ax.fill_between(
             itr,
@@ -450,7 +459,7 @@ def multi_pareto_plot(results: list) -> io.BytesIO:
             pop[:, 1],
             pop[:, 0],
             color=transparent_colors(0.5)[i],
-            label=res.name,
+            label=algorithm_names(res.name),
             marker=markers[i],
         )
         ax.scatter(
@@ -458,7 +467,7 @@ def multi_pareto_plot(results: list) -> io.BytesIO:
             pareto[:, 0],
             color=transparent_colors(0.8)[i],
             edgecolor=(0, 0, 0, 0.5),
-            label=res.name + " pareto",
+            # label=res.name + " pareto",
             s=sizes[i],
             marker=markers[i],
         )
