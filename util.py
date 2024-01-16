@@ -1,4 +1,5 @@
 import gc
+import os
 
 
 def r_plot_data(num_iter):
@@ -89,3 +90,13 @@ def algorithm_names(alg: str):
     if alg == "moead":
         return "MOEA/D"
     return ""
+
+
+def write_smiles(smiles: list, r_count: int, alg: str):
+    path = os.path.join(
+        "ResultWriter", "GuacaMol", "SMILES_" + str(r_count) + "_" + alg + ".txt"
+    )
+    # open the file in the write mode
+    with open(path, "w") as f:
+        for n, smile in enumerate(smiles):
+            f.write(str(n + 1) + ". " + smile + "\n")

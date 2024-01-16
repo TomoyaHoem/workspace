@@ -16,6 +16,7 @@ from util import (
     split_string_lines,
     transparent_colors,
     algorithm_names,
+    write_smiles,
 )
 from running_metric_ret import RunningMetricAnimation
 from extended_similarity import internal_similarity
@@ -346,7 +347,7 @@ def multi_similiarty_plot(container: dict) -> io.BytesIO:
     return fig_to_im((15, 10))
 
 
-def single_pareto_plot(res: list) -> io.BytesIO:
+def single_pareto_plot(res: list, r_count: int) -> io.BytesIO:
     """
     Function to plot pareto plot of single algorithm result using two objectives as specified.
     Highlight pareto front given two objectives.
@@ -396,8 +397,10 @@ def single_pareto_plot(res: list) -> io.BytesIO:
         pareto_sorted.append((res.X[i], res.F[i]))
     # 2. Annotate pareto front with molecule representation
     plt.subplots_adjust(left=0.04, right=0.4)
+    smiles_list = []
     for i, nd in enumerate(pareto_sorted):
         mol_smiles = sf.decoder(nd[0][0])
+        smiles_list.append(mol_smiles)
         mol_img = Draw.MolToImage(Chem.MolFromSmiles(mol_smiles))
         x_offset = int(i / 4) * 0.4
         # datapoints
@@ -433,6 +436,8 @@ def single_pareto_plot(res: list) -> io.BytesIO:
             annotation_clip=False,
             va="top",
         )
+
+    write_smiles(smiles_list, r_count, res.name)
 
     return fig_to_im((55, 15))
 

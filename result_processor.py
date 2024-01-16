@@ -53,7 +53,7 @@ class ResultProcessor:
         self.data = []
         self.compare_data = []
 
-    def __call__(self, store_print: str) -> None:
+    def __call__(self, store_print: str, r_count: int) -> None:
         """
         Entry method that calls data preparation and storing and/or printing.
 
@@ -61,7 +61,7 @@ class ResultProcessor:
             store_print: Whether to call storing or printing method.
         """
         if store_print in ["-s", "-p", "-sp", "-ps"]:
-            self.process_data()
+            self.process_data(r_count)
         else:
             return
 
@@ -100,7 +100,7 @@ class ResultProcessor:
         topN = random.sample(top, n)
         return topN
 
-    def process_data(self) -> None:
+    def process_data(self, r_count: int) -> None:
         """
         Method that summarizes algorithm results, e.g. plots or tables, and
         stores them in a list for easy access.
@@ -128,7 +128,7 @@ class ResultProcessor:
             # internal similarity plot
             algorithm_data.append(similarity_plot(res))
             # pareto plot
-            algorithm_data.append(single_pareto_plot(res))
+            algorithm_data.append(single_pareto_plot(res, r_count))
             # append to data
             self.data.append(algorithm_data)
 
