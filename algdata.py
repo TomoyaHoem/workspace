@@ -13,13 +13,14 @@ running_data: List of Lists containing the full (over all generations) running m
 class AlgData:
     def __init__(self, alg_name) -> None:
         self.alg_name = alg_name
-        self._pareto_len =[] 
+        self._pareto_len = []
         self._pareto = []
         self._qed = [[], [], []]
         self._logp = [[], [], []]
         self._sa = [[], [], []]
         self._running_data = []
         self._histories = []
+        self._hv = []
 
     @property
     def histories(self):
@@ -32,7 +33,7 @@ class AlgData:
     @property
     def pareto_len(self):
         return math.floor(np.mean(self._pareto_len))
-    
+
     @pareto_len.setter
     def pareto_len(self, value: int):
         self._pareto_len.append(value)
@@ -44,6 +45,14 @@ class AlgData:
     @pareto.setter
     def pareto(self, value: list):
         self._pareto.append(value)
+
+    @property
+    def hv(self):
+        return self._hv
+
+    @pareto.setter
+    def hv(self, value: list):
+        self._hv.append(value)
 
     @property
     def qed(self):

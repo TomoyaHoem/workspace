@@ -12,6 +12,7 @@ from result_plotter import (
     single_pareto_plot,
     multi_pareto_plot,
 )
+from util import hypervolume
 
 
 class ResultProcessor:
@@ -38,10 +39,10 @@ class ResultProcessor:
         self.data: list containing organized algorithm results as depicted below
         [ [NSGA-II Data], [NSGA-III Data], [MOEA/D Data] ]
         each inner list is organized as follows
-        [ algorithm name, initial population (SELFIE), top N pareto members (SELFIE), [settings], number of pareto members, parallel plot, [running_plots] ]
+        [ algorithm name, initial population (SELFIE), top N pareto members (SELFIE), [settings], number of pareto members, parallel plot, [running_plots], hypervolume ]
 
         compare_data: list containig ogranized result comparisons as depicted below (lists contain one entry for each algorithm)
-        [ parallel coordinate plot (for all algorithms), [algorithm names], [objective comparison], [number of pareto members] ]
+        [ parallel coordinate plot (for all algorithms), [algorithm names], [objective comparison], [number of pareto members], [hypervolume] ]
         """
         # TODO: add pareto plot (using 2-3 objectives) to compare_data
         # store algorithm run results
@@ -136,6 +137,16 @@ class ResultProcessor:
         if len(self.results) > 1:
             self.compare_data = self.process_compare_data()
 
+    def hypervolume(self, res: list) -> float:
+        # create ref_point depending on number of objectives
+        ref_point = np.ones(len(res.F[0])) * 1.2
+        # hypervolume indicator
+        ind = HV(ref_point=ref_point)
+        # calculate hypervolume
+        hyv = np.round(ind(res.F), 4)
+        # print(f"Hypervolume is: {hyv}")
+        return hyv
+
     def objective_statistics(self, res: list) -> np.array:
         """Helper function to summarize objective statistics"""
         vals, stats = [], []
@@ -156,13 +167,15 @@ class ResultProcessor:
         # PC plot
         comp_data.append(multi_pc_plot(self.results, self.task.objectives))
         # Objectives + |pareto_set|
-        algs, obj, pareto = [], [], []
+        algs, obj, pareto, hv = [], [], [], []
         for res in self.results:
             algs.append(res.name)
             obj.append(self.objective_statistics(res))
             pareto.append(len(res.F[:, 0]))
+            hv.append(hypervolume(res))
         comp_data.append(algs)
         comp_data.append(obj)
         comp_data.append(pareto)
         comp_data.append(multi_pareto_plot(self.results))
+        comp_data.append(hv)
         return comp_data

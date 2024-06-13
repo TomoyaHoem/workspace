@@ -1,5 +1,7 @@
 import gc
 import os
+import numpy as np
+from pymoo.indicators.hv import HV
 
 
 def r_plot_data(num_iter):
@@ -100,3 +102,14 @@ def write_smiles(smiles: list, r_count: int, alg: str):
     with open(path, "w") as f:
         for n, smile in enumerate(smiles):
             f.write(str(n + 1) + ". " + smile + "\n")
+
+
+def hypervolume(res: list) -> float:
+    # create ref_point depending on number of objectives
+    ref_point = np.ones(len(res.F[0])) * 1.2
+    # hypervolume indicator
+    ind = HV(ref_point=ref_point)
+    # calculate hypervolume
+    hyv = np.round(ind(res.F), 4)
+    # print(f"Hypervolume is: {hyv}")
+    return hyv

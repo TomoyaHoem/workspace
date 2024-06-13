@@ -47,8 +47,8 @@ from pymoo.util.ref_dirs import get_reference_directions
 alphabet = sf.get_semantic_robust_alphabet()
 
 SEED = 1
-NUM_ITERATIONS = 200
-REPEAT = 10
+NUM_ITERATIONS = 3
+REPEAT = 3
 
 # from extended_similarity import internal_similarity
 
@@ -201,7 +201,7 @@ class SELFIESDuplicateElimination(ElementwiseDuplicateElimination):
 
 def main(args: list, mols: pd.DataFrame, aw: AverageProceesor) -> None:
     # unpack arguments
-    algs, filename, store_print, guac, pop = args
+    algs, filename, store_print, guac, pop, r_count = args
     task = Task(guac)
     print("Passed args: ", end=" ")
     print(*args)
@@ -214,7 +214,7 @@ def main(args: list, mols: pd.DataFrame, aw: AverageProceesor) -> None:
 
     print("Parsing Algorithms...")
 
-    if len(args) < 4:
+    if len(args) < 5:
         print(
             "ERROR: invalid number of arguments please provide <[Algorithms] Filename Options Task>."
         )
@@ -295,7 +295,7 @@ def main(args: list, mols: pd.DataFrame, aw: AverageProceesor) -> None:
     # * III. Store Results
 
     rp = ResultProcessor(molecules, results, task, sets, filename)
-    rp(store_print)
+    rp(store_print, r_count)
     aw.append_results(results)
 
 
@@ -362,7 +362,7 @@ if __name__ == "__main__":
     print("# " * 10)
     print("")
     # Settings
-    pop_sizes = [100, 500]
+    pop_sizes = [100]  # , 500]
     algs = ["nsga2", "nsga3", "moead"]
     tasks = [
         "Cobimetinib",
@@ -399,7 +399,7 @@ if __name__ == "__main__":
                     + ".xlsx"
                 )
                 r_count += 1
-                main([algs, filename, store_print, t, p], input_mols, aw)
+                main([algs, filename, store_print, t, p, r_count], input_mols, aw)
                 print(f"Finished run {r_count}")
                 print("-" * 25)
                 print("")

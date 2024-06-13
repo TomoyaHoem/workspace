@@ -233,6 +233,12 @@ def write_single_results(
             worksheet.merge_range(
                 11, 13 + (i * 3), 12, 15 + (i * 3), p, formats["pareto"]
             )
+        # hypervolume
+        worksheet.merge_range("M14:M15", "HV", formats["fit"])
+        for i, p in enumerate(comp_data[5]):
+            worksheet.merge_range(
+                13, 13 + (i * 3), 14, 15 + (i * 3), p, formats["pareto"]
+            )
 
         # Pareto plot
         worksheet.merge_range("B24:K24", "Pareto plot", formats["header"])
@@ -280,6 +286,8 @@ def write_multi_results(filename: str, data: list, tasks: list, repeat: int) -> 
         last = 5 + i + 1
     # pareto header
     worksheet.merge_range(last, 1, last + 1, 1, "#Pareto", formats["fit"])
+    # hypervolume header
+    worksheet.merge_range(last + 2, 1, last + 3, 1, "HV", formats["fit"])
     for i, alg_data in enumerate(data[0]):
         worksheet.merge_range(
             3, 2 + (i * 3), 3, 4 + (i * 3), alg_data[0].upper(), formats["fit"]
@@ -311,23 +319,36 @@ def write_multi_results(filename: str, data: list, tasks: list, repeat: int) -> 
             alg_data[2][1],
             formats["pareto"],
         )
+        # hypervolume
+        worksheet.merge_range(
+            last + 2, 2 + (i * 3), last + 3, 4 + (i * 3), "", formats["pareto"]
+        )
+        worksheet.write_rich_string(
+            last + 2,
+            2 + (i * 3),
+            formats["obj_val"],
+            alg_data[3][0],
+            formats["std"],
+            alg_data[3][1],
+            formats["pareto"],
+        )
 
     # 2. Running Plot
     worksheet.merge_range(
-        last + 5, 1, last + 5, 9, "RUNNING COMPARISON", formats["header"]
+        last + 7, 1, last + 7, 9, "RUNNING COMPARISON", formats["header"]
     )
-    worksheet.insert_image(last + 6, 1, "", {"image_data": data[1]})
+    worksheet.insert_image(last + 8, 1, "", {"image_data": data[1]})
 
     # 3. Similarity Plot
     worksheet.merge_range(
-        last + 28, 1, last + 28, 9, "SIMILARITY COMPARISON", formats["header"]
+        last + 30, 1, last + 30, 9, "SIMILARITY COMPARISON", formats["header"]
     )
-    worksheet.insert_image(last + 29, 1, "", {"image_data": data[2]})
+    worksheet.insert_image(last + 31, 1, "", {"image_data": data[2]})
 
     # 4. Filler
 
     worksheet.conditional_format(
-        "A1:M62",
+        "A1:M64",
         {
             "type": "blanks",
             "format": formats["filler"],

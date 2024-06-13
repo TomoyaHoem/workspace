@@ -1,5 +1,6 @@
 import io
 import numpy as np
+from util import hypervolume
 from typing import Any
 from guacamole_tasks import Task
 from result_writer import write_multi_results
@@ -31,7 +32,7 @@ class AverageProceesor:
         self.data: List that contains the processed and organized results to be written to the excel:
         [ [[NSGA-II Data], [NSGA-III Data], [MOEA/D Data]], running plot, internal similarity plot ]
         each inner list is organized as follows
-        [ algorithm name, [Objective values (Min, Max, Average)], number of pareto members ]
+        [ algorithm name, [Objective values (Min, Max, Average)], number of pareto members, hypervolume ]
         """
         self.task = Task(guac)
         self.res_container = {}
@@ -112,15 +113,26 @@ class AverageProceesor:
             " \u00B1 " + str(np.round(np.std(pareto_count))),
         )
 
+    def hypervolume_statistics(self, rez: list) -> list:
+        """Function to calculate average hypervolume and standard deviation"""
+        hyv = []
+        for res in rez:
+            hyv.append(hypervolume(res))
+        return (
+            str(np.round(np.mean(hyv), 4)),
+            " \u00B1 " + str(np.round(np.std(hyv), 4)),
+        )
+
     def process_results(self) -> None:
         alg_data_all = []
         for key, value in self.res_container.items():
             algorithm_data = []
             # I. Alg name
             algorithm_data.append(key)
-            # II. Objectives + |Pareto|
+            # II. Objectives + |Pareto| + hypervolume
             algorithm_data.append(self.objective_statistics(value[0]))
             algorithm_data.append(self.pareto_statistics(value[0]))
+            algorithm_data.append(self.hypervolume_statistics(value[0]))
             alg_data_all.append(algorithm_data)
         self.data.append(alg_data_all)
         # III. Running Plot
