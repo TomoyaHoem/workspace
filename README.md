@@ -11,4 +11,9 @@ The discovery of novel molecules is essential to the development of new drugs. T
 
 ## Install
 
+- venv with required libs
+- fix guacamol utils (import hist from numpy instead of scipy)
+- download and paste subset pkl file into pkl folder
+- create GuacaMol Folder for results to be written into
+
 ## Known Issues
